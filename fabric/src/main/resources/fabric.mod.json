@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "fishing_reimagined",
+  "version": "${version}",
+  "name": "Fishing Reimagined",
+  "description": "A vanilla-oriented rework of Minecraft fishing focused on physical reeling and fish fighting.",
+  "authors": ["Orrhisk"],
+  "contact": {
+    "sources": "https://github.com/NineteenReincarnation/Fishing-Reimagined",
+    "issues": "https://github.com/NineteenReincarnation/Fishing-Reimagined/issues"
+  },
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["io.github.nineteenreincarnation.fishingreimagined.fabric.FishingReimaginedFabric"]
+  },
+  "depends": {
+    "fabricloader": ">=${fabric_loader_version}",
+    "minecraft": "~${minecraft_version}",
+    "java": ">=25",
+    "fabric-api": "*"
+  }
+}
