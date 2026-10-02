@@ -15,6 +15,11 @@ public final class FishingHud {
     private static final int BAR_WIDTH = 194;
     private static final int BAR_HEIGHT = 7;
 
+    private static final float LOW_END = 0.28F;
+    private static final float IDEAL_END = 0.68F;
+    private static final float RED_START = 0.90F;
+    private static final float DISPLAY_MAX = 1.20F;
+
     private FishingHud() {
     }
 
@@ -27,21 +32,25 @@ public final class FishingHud {
         }
 
         FishingHook hook = minecraft.player.fishing;
+
         if (!(hook instanceof FishingHookFightAccess access)
             || !access.fishingReimagined$isFightActive()) {
             return;
         }
 
         Font font = minecraft.font;
+
         float tension = Math.max(
             0.0F,
             access.fishingReimagined$tensionRatio()
         );
+
         float progress = Mth.clamp(
             access.fishingReimagined$catchProgress(),
             0.0F,
             1.0F
         );
+
         float breakRisk = Mth.clamp(
             access.fishingReimagined$breakRisk(),
             0.0F,
@@ -55,9 +64,15 @@ public final class FishingHud {
 
         graphics.nextStratum();
 
-        drawPanel(graphics, panelX, panelY);
+        drawPanel(
+            graphics,
+            panelX,
+            panelY
+        );
 
-        ReelAction action = ClientFishingInput.currentAction();
+        ReelAction action =
+            ClientFishingInput.currentAction();
+
         Component tensionLabel =
             Component.translatable(
                 "hud.fishing_reimagined.tension_label"
@@ -104,7 +119,8 @@ public final class FishingHud {
             );
 
         String progressPercent =
-            Math.round(progress * 100.0F) + "%";
+            Math.round(progress * 100.0F)
+                + "%";
 
         graphics.text(
             font,
@@ -130,13 +146,13 @@ public final class FishingHud {
             progress
         );
 
-        drawContextBanner(
+        drawDangerBanner(
             graphics,
             font,
             minecraft,
-            access,
             centerX,
             panelY,
+            tension,
             breakRisk
         );
     }
@@ -185,90 +201,85 @@ public final class FishingHud {
         int y,
         float tension
     ) {
-        drawBarFrame(graphics, x, y);
+        drawBarFrame(
+            graphics,
+            x,
+            y
+        );
 
         int innerX = x + 1;
         int innerY = y + 1;
         int innerWidth = BAR_WIDTH - 2;
         int innerHeight = BAR_HEIGHT - 2;
 
-        int safeEnd =
+        int lowEnd =
             innerX + Math.round(
-                innerWidth * (0.80F / 1.20F)
+                innerWidth
+                    * (LOW_END / DISPLAY_MAX)
             );
 
-        int warningEnd =
+        int idealEnd =
             innerX + Math.round(
-                innerWidth * (1.00F / 1.20F)
+                innerWidth
+                    * (IDEAL_END / DISPLAY_MAX)
+            );
+
+        int redStart =
+            innerX + Math.round(
+                innerWidth
+                    * (RED_START / DISPLAY_MAX)
             );
 
         graphics.fill(
             innerX,
             innerY,
-            safeEnd,
+            lowEnd,
             innerY + innerHeight,
-            0xFF183421
+            0xFF26323B
         );
 
         graphics.fill(
-            safeEnd,
+            lowEnd,
             innerY,
-            warningEnd,
+            idealEnd,
             innerY + innerHeight,
-            0xFF4A3718
+            0xFF1C4A28
         );
 
         graphics.fill(
-            warningEnd,
+            idealEnd,
+            innerY,
+            redStart,
+            innerY + innerHeight,
+            0xFF5A461B
+        );
+
+        graphics.fill(
+            redStart,
             innerY,
             innerX + innerWidth,
             innerY + innerHeight,
-            0xFF4B1919
+            0xFF5A1B1B
         );
 
         float normalized =
             Mth.clamp(
-                tension / 1.20F,
+                tension / DISPLAY_MAX,
                 0.0F,
                 1.0F
             );
 
-        int filled =
-            Math.round(
-                innerWidth * normalized
-            );
-
-        int fillColor;
-        if (tension < 0.80F) {
-            fillColor = 0xFF55C96E;
-        } else if (tension < 1.00F) {
-            fillColor = 0xFFF0B548;
-        } else {
-            fillColor = 0xFFF05B5B;
-        }
-
-        if (filled > 0) {
-            graphics.fill(
-                innerX,
-                innerY,
-                innerX + filled,
-                innerY + innerHeight,
-                fillColor
-            );
-        }
-
         int marker =
-            innerX + Mth.clamp(
-                filled,
-                0,
-                innerWidth - 1
+            innerX + Math.round(
+                normalized
+                    * (innerWidth - 1)
             );
 
         graphics.fill(
-            marker,
-            y - 1,
-            marker + 1,
-            y + BAR_HEIGHT + 1,
+            marker - 1,
+            y - 2,
+            marker + 2,
+            y + BAR_HEIGHT + 2,
             0xFFFFFFFF
         );
     }
@@ -279,7 +290,11 @@ public final class FishingHud {
         int y,
         float progress
     ) {
-        drawBarFrame(graphics, x, y);
+        drawBarFrame(
+            graphics,
+            x,
+            y
+        );
 
         int innerX = x + 1;
         int innerY = y + 1;
@@ -342,52 +357,47 @@ public final class FishingHud {
         );
     }
 
-    private static void drawContextBanner(
+    private static void drawDangerBanner(
         GuiGraphicsExtractor graphics,
         Font font,
         Minecraft minecraft,
-        FishingHookFightAccess access,
         int centerX,
         int panelY,
+        float tension,
         float breakRisk
     ) {
-        Component banner = null;
-        int color = 0xFFFFFFFF;
-        int background = 0xA0202020;
-
-        if (breakRisk > 0.0F) {
-            banner = Component.translatable(
-                "hud.fishing_reimagined.snap_warning"
-            );
-            color =
-                (minecraft.player.tickCount / 3) % 2 == 0
-                    ? 0xFFFF6666
-                    : 0xFFFFFFFF;
-            background = 0xB0501717;
-        } else if (
-            access.fishingReimagined$fishState() == 1
-        ) {
-            banner = Component.translatable(
-                "hud.fishing_reimagined.burst_warning"
-            );
-            color = 0xFFFFD269;
-            background = 0xA04C3414;
-        }
-
-        if (banner == null) {
+        if (tension < RED_START
+            && breakRisk <= 0.0F) {
             return;
         }
 
-        int width = font.width(banner);
-        int x = centerX - width / 2;
-        int y = panelY - 15;
+        Component banner =
+            Component.translatable(
+                "hud.fishing_reimagined.snap_warning"
+            );
+
+        int width =
+            font.width(banner);
+
+        int x =
+            centerX - width / 2;
+
+        int y =
+            panelY - 15;
+
+        int pulse =
+            (minecraft.player.tickCount / 3)
+                    % 2
+                    == 0
+                ? 0xFFFF6666
+                : 0xFFFFFFFF;
 
         graphics.fill(
             x - 6,
             y - 2,
             x + width + 6,
             y + 10,
-            background
+            0xB0501717
         );
 
         graphics.text(
@@ -395,7 +405,7 @@ public final class FishingHud {
             banner,
             x,
             y,
-            color
+            pulse
         );
     }
 }
