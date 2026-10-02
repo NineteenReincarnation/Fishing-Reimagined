@@ -5,6 +5,8 @@
   "hud.fishing_reimagined.pay_out": "[右键] 放线",
   "hud.fishing_reimagined.action.reel": "收线",
   "hud.fishing_reimagined.action.release": "放线",
+  "hud.fishing_reimagined.action.reel_key": "%s  收线",
+  "hud.fishing_reimagined.action.release_key": "%s  放线",
   "hud.fishing_reimagined.action.hold": "稳住",
   "hud.fishing_reimagined.tension.slack": "鱼线过松",
   "hud.fishing_reimagined.tension.good": "张力稳定",
@@ -15,5 +17,7 @@
   "hud.fishing_reimagined.fish.tired": "鱼况：疲劳",
   "hud.fishing_reimagined.fish.burst_hint": "鱼正在冲刺 — 放线",
   "hud.fishing_reimagined.fish.tired_hint": "鱼已疲劳 — 现在收线",
+  "hud.fishing_reimagined.fish.burst_hint_key": "鱼正在冲刺 — 按 %s 放线",
+  "hud.fishing_reimagined.fish.tired_hint_key": "鱼已疲劳 — 按 %s 收线",
   "hud.fishing_reimagined.fish.landing_hint": "正在拉鱼上岸"
 }

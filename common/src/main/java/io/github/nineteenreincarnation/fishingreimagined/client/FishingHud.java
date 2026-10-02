@@ -88,11 +88,13 @@ public final class FishingHud {
         Component actionText = switch (action) {
             case REEL_IN ->
                 Component.translatable(
-                    "hud.fishing_reimagined.action.reel"
+                    "hud.fishing_reimagined.action.reel_key",
+                    minecraft.options.keyAttack.getTranslatedKeyMessage()
                 );
             case PAY_OUT ->
                 Component.translatable(
-                    "hud.fishing_reimagined.action.release"
+                    "hud.fishing_reimagined.action.release_key",
+                    minecraft.options.keyUse.getTranslatedKeyMessage()
                 );
             case HOLD ->
                 Component.translatable(
@@ -119,18 +121,22 @@ public final class FishingHud {
 
         int fishState = access.fishingReimagined$fishState();
         if (fishState != 0) {
-            Component stateText = Component.translatable(
-                switch (fishState) {
-                    case 1 ->
-                        "hud.fishing_reimagined.fish.burst_hint";
-                    case 2 ->
-                        "hud.fishing_reimagined.fish.tired_hint";
-                    case 3 ->
-                        "hud.fishing_reimagined.fish.landing_hint";
-                    default ->
-                        "hud.fishing_reimagined.fish.fighting";
-                }
-            );
+            Component stateText = switch (fishState) {
+                case 1 -> Component.translatable(
+                    "hud.fishing_reimagined.fish.burst_hint_key",
+                    minecraft.options.keyUse.getTranslatedKeyMessage()
+                );
+                case 2 -> Component.translatable(
+                    "hud.fishing_reimagined.fish.tired_hint_key",
+                    minecraft.options.keyAttack.getTranslatedKeyMessage()
+                );
+                case 3 -> Component.translatable(
+                    "hud.fishing_reimagined.fish.landing_hint"
+                );
+                default -> Component.translatable(
+                    "hud.fishing_reimagined.fish.fighting"
+                );
+            };
             int stateWidth = font.width(stateText);
             int stateY = y - 24;
             graphics.fill(

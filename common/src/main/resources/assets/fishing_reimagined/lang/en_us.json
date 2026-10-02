@@ -5,6 +5,8 @@
   "hud.fishing_reimagined.pay_out": "[RMB] Pay out",
   "hud.fishing_reimagined.action.reel": "REEL IN",
   "hud.fishing_reimagined.action.release": "PAY OUT",
+  "hud.fishing_reimagined.action.reel_key": "%s  REEL IN",
+  "hud.fishing_reimagined.action.release_key": "%s  PAY OUT",
   "hud.fishing_reimagined.action.hold": "HOLD",
   "hud.fishing_reimagined.tension.slack": "SLACK",
   "hud.fishing_reimagined.tension.good": "CONTROLLED",
@@ -15,5 +17,7 @@
   "hud.fishing_reimagined.fish.tired": "Fish: tired",
   "hud.fishing_reimagined.fish.burst_hint": "BURST — PAY OUT",
   "hud.fishing_reimagined.fish.tired_hint": "TIRED — REEL NOW",
+  "hud.fishing_reimagined.fish.burst_hint_key": "BURST — %s TO PAY OUT",
+  "hud.fishing_reimagined.fish.tired_hint_key": "TIRED — %s TO REEL",
   "hud.fishing_reimagined.fish.landing_hint": "LANDING FISH"
 }

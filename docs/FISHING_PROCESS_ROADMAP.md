@@ -27,7 +27,7 @@ The reference bar is the clarity of Better Fishing plus the physical readability
 | F5 | Audio feedback | Add non-visual tension and fish-state information | Reel sound, drag/strain loop, burst splash, slack cue, line snap, landing hit/flop | Player can react to burst and critical tension without staring at the HUD | Ready for playtest |
 | F6 | Landing sequence | Make the successful catch feel physical | Final pull; water exit; airborne arc; line release; live fish landing and flop transition | Catch ends with one continuous physical sequence instead of an abrupt state swap | Ready for playtest |
 | F7 | Species fight profiles | Make fish types feel mechanically different | Data-driven strength, stamina, burst style, lateral style, size and landing mass | At least four vanilla fish have distinct but learnable fight behavior without changing the core rules | Ready for playtest |
-| F8 | Input and accessibility pass | Make the system robust outside the default setup | Remapping strategy, controller path, HUD options, latency smoothing, left-handed/third-person checks | No core action conflicts; feedback remains usable across common control and GUI configurations | Planned |
+| F8 | Input and accessibility pass | Make the system robust outside the default setup | Remapping strategy, controller path, HUD options, latency smoothing, left-handed/third-person checks | No core action conflicts; feedback remains usable across common control and GUI configurations | Ready for playtest |
 | F9 | Compatibility and runtime validation | Validate the full loop rather than only compilation | Fabric + NeoForge runtime; multiplayer; shaders/resource packs; performance; edge cases; recorded playtests | Both loaders pass real-world fishing sessions and no known blocker remains in the core fight loop | Planned |
 
 ## F1 specification — Hooked fish visual 2.0
@@ -179,3 +179,16 @@ Implemented in 1.1.11+26.2:
 - lateral steering response is also species-specific
 
 The four fish still use the same core rules, so learning the system transfers between species while their rhythm and difficulty differ.
+
+
+## F8 implementation checkpoint
+
+Implemented in 1.1.12+26.2:
+
+- fishing input continues to use Minecraft's attack/use key mappings rather than hard-coded mouse button codes
+- HUD action labels now display the player's actual remapped attack/use keys
+- burst/tired hints also display the current remapped key
+- first-person rod transforms already handle right- and left-hand item display contexts
+- HUD placement uses scaled GUI coordinates and therefore follows Minecraft GUI scale
+
+Controller support remains dependent on whatever input layer maps controller actions into Minecraft's attack/use mappings; a dedicated controller API is intentionally not introduced into common code.
