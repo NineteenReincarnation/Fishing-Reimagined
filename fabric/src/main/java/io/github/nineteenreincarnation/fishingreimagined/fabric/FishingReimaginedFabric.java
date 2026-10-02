@@ -2,26 +2,52 @@ package io.github.nineteenreincarnation.fishingreimagined.fabric;
 
 import io.github.nineteenreincarnation.fishingreimagined.FishingReimagined;
 import io.github.nineteenreincarnation.fishingreimagined.fight.ServerFishingInput;
+import io.github.nineteenreincarnation.fishingreimagined.fight.ServerFishingMode;
+import io.github.nineteenreincarnation.fishingreimagined.network.FishingModePayload;
 import io.github.nineteenreincarnation.fishingreimagined.network.ReelInputPayload;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 
-public final class FishingReimaginedFabric implements ModInitializer {
+public final class FishingReimaginedFabric
+    implements ModInitializer {
+
     @Override
     public void onInitialize() {
         FishingReimagined.initialize();
 
-        PayloadTypeRegistry.serverboundPlay().register(
-            ReelInputPayload.TYPE,
-            ReelInputPayload.STREAM_CODEC
-        );
-        ServerPlayNetworking.registerGlobalReceiver(
-            ReelInputPayload.TYPE,
-            (payload, context) -> ServerFishingInput.update(
-                context.player(),
-                payload.action()
-            )
-        );
+        PayloadTypeRegistry
+            .serverboundPlay()
+            .register(
+                ReelInputPayload.TYPE,
+                ReelInputPayload.STREAM_CODEC
+            );
+
+        PayloadTypeRegistry
+            .serverboundPlay()
+            .register(
+                FishingModePayload.TYPE,
+                FishingModePayload.STREAM_CODEC
+            );
+
+        ServerPlayNetworking
+            .registerGlobalReceiver(
+                ReelInputPayload.TYPE,
+                (payload, context) ->
+                    ServerFishingInput.update(
+                        context.player(),
+                        payload.action()
+                    )
+            );
+
+        ServerPlayNetworking
+            .registerGlobalReceiver(
+                FishingModePayload.TYPE,
+                (payload, context) ->
+                    ServerFishingMode.update(
+                        context.player(),
+                        payload.enabled()
+                    )
+            );
     }
 }
