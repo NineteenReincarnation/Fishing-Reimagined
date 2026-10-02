@@ -4,36 +4,29 @@ import java.util.Objects;
 import java.util.random.RandomGenerator;
 
 public final class FishingFight {
-    private static final double INITIAL_TENSION = 0.34;
+    private static final double TRACK_MIN = 0.035;
+    private static final double TRACK_MAX = 0.965;
 
-    private static final double REEL_TENSION_GAIN = 0.0215;
-    private static final double RELEASE_TENSION_LOSS = 0.0290;
-    private static final double HOLD_TENSION_LOSS = 0.0140;
-    private static final double TENSION_RESPONSE = 0.38;
+    private static final double PLAYER_ACCEL_RIGHT = 0.0054;
+    private static final double PLAYER_ACCEL_LEFT = -0.0048;
+    private static final double PLAYER_DAMPING = 0.86;
+    private static final double PLAYER_MAX_SPEED = 0.045;
+    private static final double EDGE_BOUNCE = 0.28;
 
-    private static final double VERY_LOW_TENSION = 0.12;
-    private static final double LOW_TENSION = 0.28;
-    private static final double IDEAL_TENSION_END = 0.68;
-    private static final double HIGH_TENSION_END = 0.90;
-    private static final double BREAK_TENSION = 0.90;
+    private static final int OUTSIDE_GRACE_TICKS = 10;
+    private static final double PROGRESS_GAIN = 0.0060;
+    private static final double PROGRESS_LOSS = -0.0038;
+    private static final double PROGRESS_RESPONSE = 0.18;
+    private static final double PROGRESS_DIRECTION_RESPONSE = 0.10;
 
-    private static final double PROGRESS_GAIN_IDEAL = 0.0048;
-    private static final double PROGRESS_GAIN_IDEAL_RELEASE = 0.0020;
-    private static final double PROGRESS_GAIN_HIGH = 0.0021;
-    private static final double PROGRESS_GAIN_HIGH_RELEASE = 0.0007;
-    private static final double PROGRESS_LOSS_LOW = -0.0016;
-    private static final double PROGRESS_LOSS_VERY_LOW = -0.0038;
-    private static final double PROGRESS_LOSS_RED = -0.0013;
-
-    private static final double PROGRESS_RESPONSE_SAME_DIRECTION = 0.24;
-    private static final double PROGRESS_RESPONSE_DIRECTION_CHANGE = 0.13;
-
-    private static final double SNAP_LIMIT = 32.0;
+    private static final double ESCAPE_LIMIT = 70.0;
 
     private final FishProfile fishProfile;
     private final LineProfile lineProfile;
     private final FishBehaviorSession behavior;
+    private final RandomGenerator random;
     private final double initialDistance;
+    private final double catchZoneWidth;
 
     private long tick;
     private FightPhase phase = FightPhase.FIGHTING;
@@ -41,18 +34,25 @@ public final class FishingFight {
     private double stamina;
     private double distance;
     private double lineLength;
-    private double tension;
-    private double tensionVelocity;
 
-    private double landingProgress;
-    private double progressVelocity;
-
+    private double fishTrackPosition = 0.50;
     private double fishVelocity;
-    private double lineVelocity;
+    private double fishTargetPosition = 0.50;
+    private int fishDecisionTicks;
+    private FishFightMode previousMode;
+
+    private double catchZonePosition = 0.50;
+    private double catchZoneVelocity;
+
+    private double landingProgress = 0.08;
+    private double progressVelocity;
+    private int outsideTicks;
+    private double escapePressure;
+
+    private double tension;
     private double reelEfficiency = 1.0;
     private double dragSlip;
 
-    private double snapPressure;
     private int slackTicks;
     private int overTensionTicks;
 
@@ -69,7 +69,7 @@ public final class FishingFight {
         this.fishProfile = Objects.requireNonNull(fishProfile, "fishProfile");
         this.lineProfile = Objects.requireNonNull(lineProfile, "lineProfile");
         Objects.requireNonNull(fishBehavior, "fishBehavior");
-        Objects.requireNonNull(random, "random");
+        this.random = Objects.requireNonNull(random, "random");
 
         if (!Double.isFinite(initialDistance) || initialDistance < 0.0) {
             throw new IllegalArgumentException(
@@ -89,12 +89,28 @@ public final class FishingFight {
         distance = initialDistance;
         lineLength = initialLineLength;
         stamina = fishProfile.maxStamina();
-        tension = lineProfile.maxTension() * INITIAL_TENSION;
+
+        double speedDifficulty = clamp(
+            fishProfile.cruiseSpeed() / 0.022,
+            0.65,
+            1.45
+        );
+
+        double combinedDifficulty =
+            (speedDifficulty + fishProfile.pullStrength()) * 0.5;
+
+        catchZoneWidth = clamp(
+            0.30 - (combinedDifficulty - 1.0) * 0.055,
+            0.235,
+            0.335
+        );
 
         behavior = fishBehavior.createSession(
             fishProfile,
             random
         );
+
+        updatePresentationState();
     }
 
     public static FishingFight prototype(
@@ -119,17 +135,17 @@ public final class FishingFight {
         }
 
         tick++;
-
         lastIntent = Objects.requireNonNull(
             behavior.nextIntent(snapshot()),
             "fish intent"
         );
 
-        updateTension(action);
-        updateProgress(action);
-        updateStamina(action);
-        updateWorldPresentation(action);
-        updateFailurePressure();
+        updateCatchZone(action);
+        updateFishTrack();
+        updateProgress();
+        updateStamina();
+        updateEscapePressure();
+        updatePresentationState();
         updatePhase();
 
         return snapshot();
@@ -147,75 +163,225 @@ public final class FishingFight {
             tension,
             lineProfile.maxTension(),
             fishVelocity,
-            lineVelocity,
+            catchZoneVelocity,
             reelEfficiency,
             dragSlip,
             landingProgress,
-            breakRisk(),
+            escapeRisk(),
             slackTicks,
             overTensionTicks,
+            fishTrackPosition,
+            catchZonePosition,
+            catchZoneWidth,
+            overlapRatio(),
             lastIntent
         );
     }
 
-    private void updateTension(ReelAction action) {
-        double fishPressure = switch (lastIntent.mode()) {
-            case PROBING -> 0.0015;
-            case PULLING -> 0.0065;
-            case BURST -> 0.0175;
-            case RECOVERING -> -0.0030;
-            case TIRED -> 0.0005;
+    private void updateCatchZone(ReelAction action) {
+        double acceleration = switch (action) {
+            case REEL_IN -> PLAYER_ACCEL_RIGHT;
+            case PAY_OUT -> PLAYER_ACCEL_LEFT;
+            case HOLD -> 0.0;
         };
 
-        fishPressure *= 0.82 + fishProfile.pullStrength() * 0.22;
+        catchZoneVelocity += acceleration;
+        catchZoneVelocity *= PLAYER_DAMPING;
+        catchZoneVelocity = clamp(
+            catchZoneVelocity,
+            -PLAYER_MAX_SPEED,
+            PLAYER_MAX_SPEED
+        );
 
-        double playerPressure = switch (action) {
-            case REEL_IN -> REEL_TENSION_GAIN;
-            case PAY_OUT -> -RELEASE_TENSION_LOSS;
-            case HOLD -> -HOLD_TENSION_LOSS;
-        };
+        catchZonePosition += catchZoneVelocity;
 
-        double targetVelocity =
-            fishPressure + playerPressure;
+        double halfWidth = catchZoneWidth * 0.5;
+        double minCenter = halfWidth;
+        double maxCenter = 1.0 - halfWidth;
 
-        tensionVelocity +=
-            (targetVelocity - tensionVelocity)
-                * TENSION_RESPONSE;
-
-        double ratio = tensionRatio() + tensionVelocity;
-
-        tension = lineProfile.maxTension()
-            * clamp(ratio, 0.0, 1.22);
-
-        reelEfficiency = action == ReelAction.REEL_IN
-            ? clamp(
-                1.0 - Math.max(0.0, tensionRatio() - 0.76) * 1.15,
-                0.55,
-                1.0
-            )
-            : 1.0;
-
-        dragSlip = 0.0;
+        if (catchZonePosition < minCenter) {
+            catchZonePosition = minCenter;
+            if (catchZoneVelocity < 0.0) {
+                catchZoneVelocity =
+                    -catchZoneVelocity * EDGE_BOUNCE;
+            }
+        } else if (catchZonePosition > maxCenter) {
+            catchZonePosition = maxCenter;
+            if (catchZoneVelocity > 0.0) {
+                catchZoneVelocity =
+                    -catchZoneVelocity * EDGE_BOUNCE;
+            }
+        }
     }
 
-    private void updateProgress(ReelAction action) {
-        double ratio = tensionRatio();
+    private void updateFishTrack() {
+        FishFightMode mode = lastIntent.mode();
+
+        if (mode != previousMode || fishDecisionTicks <= 0) {
+            chooseFishTarget(mode);
+            previousMode = mode;
+        }
+
+        fishDecisionTicks--;
+
+        double speciesSpeed = clamp(
+            fishProfile.cruiseSpeed() / 0.022,
+            0.65,
+            1.45
+        );
+
+        double maxSpeed = switch (mode) {
+            case PROBING -> 0.014;
+            case PULLING -> 0.022;
+            case BURST -> 0.046;
+            case RECOVERING -> 0.011;
+            case TIRED -> 0.009;
+        } * speciesSpeed;
+
+        double response = switch (mode) {
+            case PROBING -> 0.070;
+            case PULLING -> 0.095;
+            case BURST -> 0.155;
+            case RECOVERING -> 0.060;
+            case TIRED -> 0.045;
+        };
+
+        double desiredVelocity =
+            (fishTargetPosition - fishTrackPosition) * response;
+
+        desiredVelocity += clamp(
+            lastIntent.lateralTurnRadians(),
+            -0.22,
+            0.22
+        ) * 0.012;
+
+        desiredVelocity = clamp(
+            desiredVelocity,
+            -maxSpeed,
+            maxSpeed
+        );
+
+        double velocityResponse =
+            mode == FishFightMode.BURST ? 0.48 : 0.30;
+
+        fishVelocity +=
+            (desiredVelocity - fishVelocity) * velocityResponse;
+
+        fishVelocity *=
+            mode == FishFightMode.TIRED ? 0.90 : 0.94;
+
+        fishVelocity = clamp(
+            fishVelocity,
+            -maxSpeed,
+            maxSpeed
+        );
+
+        fishTrackPosition += fishVelocity;
+
+        if (fishTrackPosition < TRACK_MIN) {
+            fishTrackPosition = TRACK_MIN;
+            fishVelocity = Math.abs(fishVelocity) * 0.45;
+            fishTargetPosition = clamp(
+                0.24 + random.nextDouble() * 0.34,
+                TRACK_MIN,
+                TRACK_MAX
+            );
+        } else if (fishTrackPosition > TRACK_MAX) {
+            fishTrackPosition = TRACK_MAX;
+            fishVelocity = -Math.abs(fishVelocity) * 0.45;
+            fishTargetPosition = clamp(
+                0.42 - random.nextDouble() * 0.24,
+                TRACK_MIN,
+                TRACK_MAX
+            );
+        }
+    }
+
+    private void chooseFishTarget(FishFightMode mode) {
+        switch (mode) {
+            case PROBING -> {
+                fishTargetPosition = clamp(
+                    fishTrackPosition + random.nextDouble(-0.22, 0.22),
+                    0.10,
+                    0.90
+                );
+                fishDecisionTicks = random.nextInt(18, 34);
+            }
+
+            case PULLING -> {
+                fishTargetPosition = random.nextBoolean()
+                    ? random.nextDouble(0.66, 0.90)
+                    : random.nextDouble(0.10, 0.34);
+                fishDecisionTicks = random.nextInt(14, 28);
+            }
+
+            case BURST -> {
+                double separation =
+                    fishTrackPosition - catchZonePosition;
+
+                boolean runRight =
+                    Math.abs(separation) > 0.08
+                        ? separation > 0.0
+                        : random.nextBoolean();
+
+                fishTargetPosition = runRight
+                    ? random.nextDouble(0.88, 0.965)
+                    : random.nextDouble(0.035, 0.12);
+
+                fishDecisionTicks = random.nextInt(8, 16);
+            }
+
+            case RECOVERING -> {
+                fishTargetPosition = clamp(
+                    0.50 + random.nextDouble(-0.18, 0.18),
+                    0.16,
+                    0.84
+                );
+                fishDecisionTicks = random.nextInt(20, 34);
+            }
+
+            case TIRED -> {
+                fishTargetPosition = clamp(
+                    fishTrackPosition + random.nextDouble(-0.10, 0.10),
+                    0.16,
+                    0.84
+                );
+                fishDecisionTicks = random.nextInt(28, 48);
+            }
+        }
+    }
+
+    private void updateProgress() {
+        double overlap = overlapRatio();
         double targetVelocity;
 
-        if (ratio < VERY_LOW_TENSION) {
-            targetVelocity = PROGRESS_LOSS_VERY_LOW;
-        } else if (ratio < LOW_TENSION) {
-            targetVelocity = PROGRESS_LOSS_LOW;
-        } else if (ratio <= IDEAL_TENSION_END) {
-            targetVelocity = action == ReelAction.REEL_IN
-                ? PROGRESS_GAIN_IDEAL
-                : PROGRESS_GAIN_IDEAL_RELEASE;
-        } else if (ratio < HIGH_TENSION_END) {
-            targetVelocity = action == ReelAction.REEL_IN
-                ? PROGRESS_GAIN_HIGH
-                : PROGRESS_GAIN_HIGH_RELEASE;
+        if (overlap > 0.0) {
+            outsideTicks = 0;
+            targetVelocity =
+                PROGRESS_GAIN * (0.72 + overlap * 0.28);
         } else {
-            targetVelocity = PROGRESS_LOSS_RED;
+            outsideTicks++;
+
+            if (outsideTicks <= OUTSIDE_GRACE_TICKS) {
+                targetVelocity = 0.0;
+            } else {
+                double miss = Math.max(
+                    0.0,
+                    Math.abs(
+                        fishTrackPosition - catchZonePosition
+                    ) - catchZoneWidth * 0.5
+                );
+
+                targetVelocity =
+                    PROGRESS_LOSS
+                        * (
+                            0.82
+                                + Math.min(
+                                    0.55,
+                                    miss * 1.6
+                                )
+                        );
+            }
         }
 
         boolean sameDirection =
@@ -224,17 +390,16 @@ public final class FishingFight {
                 || Math.abs(progressVelocity) < 1.0E-7;
 
         double response = sameDirection
-            ? PROGRESS_RESPONSE_SAME_DIRECTION
-            : PROGRESS_RESPONSE_DIRECTION_CHANGE;
+            ? PROGRESS_RESPONSE
+            : PROGRESS_DIRECTION_RESPONSE;
 
         progressVelocity +=
-            (targetVelocity - progressVelocity)
-                * response;
+            (targetVelocity - progressVelocity) * response;
 
         progressVelocity = clamp(
             progressVelocity,
-            PROGRESS_LOSS_VERY_LOW,
-            PROGRESS_GAIN_IDEAL
+            PROGRESS_LOSS * 1.35,
+            PROGRESS_GAIN
         );
 
         landingProgress = clamp(
@@ -252,15 +417,14 @@ public final class FishingFight {
         }
     }
 
-    private void updateStamina(ReelAction action) {
-        double ratio = tensionRatio();
-
-        if (action == ReelAction.REEL_IN
-            && ratio >= LOW_TENSION
-            && ratio < HIGH_TENSION_END) {
+    private void updateStamina() {
+        if (overlapRatio() > 0.0) {
             double drain =
                 fishProfile.staminaDrainRate()
-                    * (0.18 + lastIntent.effort() * 0.38);
+                    * (
+                        0.20
+                            + lastIntent.effort() * 0.30
+                    );
 
             stamina = Math.max(
                 0.0,
@@ -269,55 +433,62 @@ public final class FishingFight {
             return;
         }
 
-        if (action == ReelAction.PAY_OUT
-            && !lastIntent.burst()) {
+        if (!lastIntent.burst()) {
             stamina = Math.min(
                 fishProfile.maxStamina(),
-                stamina + fishProfile.recoveryRate() * 0.22
+                stamina
+                    + fishProfile.recoveryRate() * 0.18
             );
         }
     }
 
-    private void updateWorldPresentation(ReelAction action) {
-        double oldDistance = distance;
-        double oldLineLength = lineLength;
+    private void updateEscapePressure() {
+        if (
+            landingProgress <= 0.001
+                && outsideTicks > OUTSIDE_GRACE_TICKS + 16
+        ) {
+            escapePressure +=
+                1.0
+                    + Math.min(
+                        0.7,
+                        Math.abs(fishVelocity) * 12.0
+                    );
+        } else {
+            escapePressure = Math.max(
+                0.0,
+                escapePressure - 3.0
+            );
+        }
 
+        slackTicks = outsideTicks;
+        overTensionTicks =
+            (int) Math.round(escapePressure);
+    }
+
+    private void updatePresentationState() {
         double span = Math.max(
             0.0,
             initialDistance - lineProfile.catchDistance()
         );
 
-        double baseDistance =
+        double runOffset =
+            lastIntent.burst()
+                ? 0.65
+                : lastIntent.mode() == FishFightMode.PULLING
+                    ? 0.20
+                    : 0.0;
+
+        double targetDistance =
             lineProfile.catchDistance()
-                + span * (1.0 - landingProgress);
-
-        double runOffset = switch (lastIntent.mode()) {
-            case BURST -> 1.00 + lastIntent.effort() * 0.55;
-            case PULLING -> 0.30;
-            case PROBING -> 0.10;
-            case RECOVERING -> -0.06;
-            case TIRED -> 0.0;
-        };
-
-        double targetDistance = Math.max(
-            lineProfile.catchDistance(),
-            baseDistance + runOffset
-        );
-
-        double response =
-            lastIntent.burst() ? 0.28 : 0.16;
+                + span * (1.0 - landingProgress)
+                + runOffset;
 
         distance +=
             (targetDistance - distance)
-                * response;
+                * (lastIntent.burst() ? 0.24 : 0.15);
 
-        fishVelocity =
-            distance - oldDistance;
-
-        double slack = Math.max(
-            0.0,
-            0.64 - tensionRatio()
-        ) * 0.90;
+        double slack =
+            overlapRatio() > 0.0 ? 0.16 : 0.46;
 
         lineLength = Math.min(
             lineProfile.maxLineLength(),
@@ -327,74 +498,62 @@ public final class FishingFight {
             )
         );
 
-        lineVelocity =
-            lineLength - oldLineLength;
+        double cosmeticLoad =
+            0.22
+                + Math.min(
+                    0.36,
+                    Math.abs(fishVelocity) * 8.0
+                )
+                + lastIntent.effort() * 0.18
+                + (overlapRatio() > 0.0 ? 0.02 : 0.10);
 
-        if (action == ReelAction.REEL_IN
-            && lineVelocity > 0.0) {
-            lineVelocity *= 0.25;
-        }
-    }
+        tension =
+            lineProfile.maxTension()
+                * clamp(cosmeticLoad, 0.18, 0.84);
 
-    private void updateFailurePressure() {
-        double ratio = tensionRatio();
+        reelEfficiency =
+            overlapRatio() > 0.0 ? 1.0 : 0.65;
 
-        if (ratio < VERY_LOW_TENSION) {
-            slackTicks++;
-        } else {
-            slackTicks =
-                Math.max(
-                    0,
-                    slackTicks - 3
-                );
-        }
-
-        if (ratio >= BREAK_TENSION) {
-            double overload = ratio - BREAK_TENSION;
-
-            snapPressure +=
-                0.70
-                    + overload * 3.5;
-        } else if (ratio < 0.82) {
-            snapPressure = Math.max(
-                0.0,
-                snapPressure - 2.4
-            );
-        } else {
-            snapPressure = Math.max(
-                0.0,
-                snapPressure - 0.8
-            );
-        }
-
-        overTensionTicks =
-            (int) Math.round(snapPressure);
+        dragSlip = 0.0;
     }
 
     private void updatePhase() {
-        if (snapPressure >= SNAP_LIMIT) {
-            phase = FightPhase.LINE_BROKEN;
+        if (escapePressure >= ESCAPE_LIMIT) {
+            phase = FightPhase.ESCAPED;
             return;
         }
 
         if (landingProgress >= 1.0) {
             landingProgress = 1.0;
             distance = lineProfile.catchDistance();
-            lineLength = lineProfile.catchDistance();
+            lineLength = distance;
             phase = FightPhase.CAUGHT;
             return;
         }
 
         phase =
-            staminaRatio()
-                    <= fishProfile.tiredThreshold()
+            staminaRatio() <= fishProfile.tiredThreshold()
                 ? FightPhase.TIRED
                 : FightPhase.FIGHTING;
     }
 
-    private double breakRisk() {
+    private double overlapRatio() {
+        double half = catchZoneWidth * 0.5;
+        double markerRadius = 0.018;
+        double distanceFromCenter =
+            Math.abs(fishTrackPosition - catchZonePosition);
+
         return clamp(
-            snapPressure / SNAP_LIMIT,
+            (half + markerRadius - distanceFromCenter)
+                / (half + markerRadius),
+            0.0,
+            1.0
+        );
+    }
+
+    private double escapeRisk() {
+        return clamp(
+            escapePressure / ESCAPE_LIMIT,
             0.0,
             1.0
         );
@@ -406,20 +565,11 @@ public final class FishingFight {
             : stamina / fishProfile.maxStamina();
     }
 
-    private double tensionRatio() {
-        return lineProfile.maxTension() <= 0.0
-            ? 0.0
-            : tension / lineProfile.maxTension();
-    }
-
     private static double clamp(
         double value,
         double min,
         double max
     ) {
-        return Math.max(
-            min,
-            Math.min(max, value)
-        );
+        return Math.max(min, Math.min(max, value));
     }
 }
