@@ -10,6 +10,7 @@ import java.util.Random;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.stats.Stats;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.animal.fish.AbstractFish;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.FishingHook;
@@ -243,6 +244,13 @@ public final class HookedFish {
         );
 
         level.addFreshEntity(fish);
+
+        ExperienceOrb.award(
+            level,
+            owner.position()
+                .add(0.0, 0.5, 0.0),
+            1 + level.getRandom().nextInt(6)
+        );
 
         owner.awardStat(
             Stats.FISH_CAUGHT,
