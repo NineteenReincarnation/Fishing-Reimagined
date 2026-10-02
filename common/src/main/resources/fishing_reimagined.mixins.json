@@ -10,7 +10,8 @@
     "client.MinecraftMixin",
     "client.HudMixin",
     "client.FishingHookRenderStateMixin",
-    "client.FishingHookRendererMixin"
+    "client.FishingHookRendererMixin",
+    "client.ItemInHandRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

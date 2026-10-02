@@ -34,6 +34,7 @@ public final class ClientFishingInput {
         }
 
         sendIfChanged(action);
+        ClientFishingPose.tick(minecraft);
     }
 
     public static boolean isFightActive(Minecraft minecraft) {
