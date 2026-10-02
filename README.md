@@ -7,7 +7,7 @@ Fishing Reimagined is a vanilla-oriented fishing rework for Minecraft Java Editi
 - Minecraft: **26.2**
 - Loaders: **Fabric + NeoForge**
 - Java: **25**
-- Mod version: **1.1.13+26.2**
+- Mod version: **1.1.17+26.2**
 - Development branch: **main**
 
 The current prototype connects the shared fight simulation to vanilla fishing on both supported loaders and now exposes the fight state visually.
@@ -56,6 +56,7 @@ Artifacts are written to `fabric/build/libs/` and `neoforge/build/libs/`.
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Fight engine](docs/FIGHT_ENGINE.md)
+- [Fight physics 2.0](docs/FIGHT_PHYSICS_2.md)
 - [Versioning](docs/VERSIONING.md)
 - [Validation status](docs/VALIDATION_STATUS.md)
 - [Playtest protocol](docs/PLAYTEST_PROTOCOL.md)

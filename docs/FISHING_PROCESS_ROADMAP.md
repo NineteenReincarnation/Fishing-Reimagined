@@ -220,3 +220,24 @@ Implemented in 1.1.16+26.2 after video comparison against the reference presenta
 - burst water effects were strengthened to match the larger world motion
 
 The important acceptance criterion is no longer merely "the fish animates." A normal fight should visibly travel across the water, while a burst should be readable from the fish alone even if the HUD is ignored.
+
+
+## F10 — Physical fight core 2.0
+
+Implemented in 1.1.17+26.2.
+
+The previous direct-tension controller has been replaced by a multi-state physical fight:
+
+- four simulation substeps per game tick
+- spring + velocity damping tension
+- fish radial velocity and inertia
+- load-dependent reel efficiency
+- automatic drag slip above the drag threshold
+- drag recovery before line break
+- break heat that accounts for overload and relative velocity
+- distance-derived catch progress
+- probing, pulling, burst, recovery and tired fish rhythm
+- synchronized fish speed, spool speed, drag slip and distance
+- rod, HUD, audio and fish visuals driven from the synchronized physical state
+
+This stage deliberately changes the feel of the fight rather than preserving the 1.1.16 balance. Runtime tuning should now focus on reel speed, drag threshold, spring stiffness, damping, burst force and typical fight duration.
