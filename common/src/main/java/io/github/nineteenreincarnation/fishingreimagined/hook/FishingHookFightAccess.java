@@ -16,6 +16,8 @@ public interface FishingHookFightAccess {
 
     float fishingReimagined$staminaRatio();
 
+    float fishingReimagined$breakRisk();
+
     int fishingReimagined$fishState();
 
     int fishingReimagined$fishKindId();

@@ -10,16 +10,21 @@ public record FightSnapshot(
     double tension,
     double maxTension,
     double landingProgress,
+    double breakRisk,
     int slackTicks,
     int overTensionTicks,
     FishIntent fishIntent
 ) {
     public double staminaRatio() {
-        return maxStamina <= 0.0 ? 0.0 : clamp01(stamina / maxStamina);
+        return maxStamina <= 0.0
+            ? 0.0
+            : clamp01(stamina / maxStamina);
     }
 
     public double tensionRatio() {
-        return maxTension <= 0.0 ? 0.0 : Math.max(0.0, tension / maxTension);
+        return maxTension <= 0.0
+            ? 0.0
+            : Math.max(0.0, tension / maxTension);
     }
 
     public boolean isTerminal() {

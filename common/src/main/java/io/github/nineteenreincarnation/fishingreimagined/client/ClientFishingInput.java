@@ -25,12 +25,9 @@ public final class ClientFishingInput {
 
         ReelAction action = ReelAction.HOLD;
         if (isFightActive(minecraft)) {
-            boolean reelIn = minecraft.options.keyAttack.isDown();
-            boolean payOut = minecraft.options.keyUse.isDown();
-
-            if (reelIn != payOut) {
-                action = reelIn ? ReelAction.REEL_IN : ReelAction.PAY_OUT;
-            }
+            action = minecraft.options.keyUse.isDown()
+                ? ReelAction.REEL_IN
+                : ReelAction.PAY_OUT;
         }
 
         sendIfChanged(action);

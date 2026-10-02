@@ -18,7 +18,7 @@ public record LineProfile(
         0.08,
         0.15,
         0.065,
-        8,
+        18,
         1.5,
         40.0
     );

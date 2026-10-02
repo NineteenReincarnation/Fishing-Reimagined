@@ -4,11 +4,22 @@ import java.util.Objects;
 import java.util.random.RandomGenerator;
 
 public final class FishingFight {
-    private static final double SAFE_TENSION_MAX_RATIO = 0.72;
-    private static final double BASE_PROGRESS_PER_TICK = 0.0030;
-    private static final double SLACK_PROGRESS_LOSS_PER_TICK = 0.0015;
-    private static final double BURST_PROGRESS_FACTOR = 0.12;
-    private static final double TIRED_PROGRESS_FACTOR = 1.35;
+    private static final double INITIAL_TENSION_RATIO = 0.42;
+    private static final double SWEET_MIN = 0.34;
+    private static final double SWEET_MAX = 0.70;
+    private static final double SWEET_IDEAL = 0.52;
+    private static final double HIGH_TENSION = 0.82;
+    private static final double BREAK_TENSION = 0.95;
+    private static final double SLACK_TENSION = 0.08;
+
+    private static final double REEL_TENSION_PER_TICK = 2.55;
+    private static final double RELEASE_TENSION_PER_TICK = -5.10;
+    private static final double HOLD_TENSION_PER_TICK = -1.20;
+
+    private static final double BASE_PROGRESS_PER_TICK = 0.0052;
+    private static final double SOFT_PROGRESS_LOSS = 0.00030;
+    private static final double SLACK_PROGRESS_LOSS = 0.0024;
+    private static final double HIGH_PROGRESS_LOSS = 0.0010;
 
     private final FishProfile fishProfile;
     private final LineProfile lineProfile;
@@ -52,9 +63,9 @@ public final class FishingFight {
         stamina = fishProfile.maxStamina();
         distance = initialDistance;
         lineLength = initialLineLength;
+        tension = lineProfile.maxTension() * INITIAL_TENSION_RATIO;
         landingProgress = initialDistance <= lineProfile.catchDistance() ? 1.0 : 0.0;
         behavior = fishBehavior.createSession(fishProfile, random);
-        recalculateTension();
     }
 
     public static FishingFight prototype(RandomGenerator random, double initialDistance) {
@@ -80,19 +91,11 @@ public final class FishingFight {
             "fish intent"
         );
 
-        applyReelAction(action);
-        applyFishMovement();
-        recalculateTension();
-        applyLineConstraint();
-        recalculateTension();
-        updateStamina();
-
-        double previousProgress = landingProgress;
-        updateLandingProgress(action);
-        applyProgressPull(landingProgress - previousProgress);
-
-        recalculateTension();
+        updateTension(action);
         updateFailurePressure();
+        updateStamina();
+        updateLandingProgress();
+        updateVisualDistance();
         updatePhase();
 
         return snapshot();
@@ -109,148 +112,111 @@ public final class FishingFight {
             tension,
             lineProfile.maxTension(),
             landingProgress,
+            breakRisk(),
             slackTicks,
             overTensionTicks,
             lastIntent
         );
     }
 
-    private void applyReelAction(ReelAction action) {
-        switch (action) {
-            case REEL_IN ->
-                lineLength = Math.max(
-                    0.0,
-                    lineLength - lineProfile.reelRate()
+    private void updateTension(ReelAction action) {
+        double staminaRatio = fishProfile.maxStamina() <= 0.0
+            ? 0.0
+            : stamina / fishProfile.maxStamina();
+
+        double strength =
+            0.45 + 0.55 * Math.sqrt(Math.max(0.0, staminaRatio));
+
+        double fishPull =
+            fishProfile.pullStrength()
+                * strength
+                * (
+                    0.55
+                        + lastIntent.effort() * 0.90
+                        + Math.max(0.0, lastIntent.outwardVelocity()) * 18.0
                 );
-            case PAY_OUT ->
-                lineLength = Math.min(
-                    lineProfile.maxLineLength(),
-                    lineLength + lineProfile.payoutRate()
-                );
-            case HOLD -> {
-            }
-        }
+
+        double playerDelta = switch (action) {
+            case REEL_IN -> REEL_TENSION_PER_TICK;
+            case PAY_OUT -> RELEASE_TENSION_PER_TICK;
+            case HOLD -> HOLD_TENSION_PER_TICK;
+        };
+
+        double damping = tension > lineProfile.maxTension() ? -0.55 : 0.0;
+
+        tension = clamp(
+            tension + fishPull + playerDelta + damping,
+            0.0,
+            lineProfile.maxTension() * 1.30
+        );
     }
 
-    private void applyFishMovement() {
-        double staminaRatio = stamina / fishProfile.maxStamina();
-        double strengthFactor =
-            0.30 + 0.70 * Math.sqrt(Math.max(0.0, staminaRatio));
-        double outwardMovement =
-            lastIntent.outwardVelocity()
-                * fishProfile.pullStrength()
-                * strengthFactor;
-
-        distance = Math.max(0.0, distance + outwardMovement);
-    }
-
-    private void applyLineConstraint() {
-        if (tension <= 0.0) {
-            return;
-        }
-
-        double normalizedTension =
-            Math.min(1.0, tension / lineProfile.maxTension());
-        double staminaRatio = stamina / fishProfile.maxStamina();
-        double fatigueAdvantage =
-            0.35 + (1.0 - staminaRatio) * 0.85;
-        double inwardMovement =
-            normalizedTension
-                * lineProfile.pullbackRate()
-                * fatigueAdvantage;
-
-        distance = Math.max(0.0, distance - inwardMovement);
-    }
-
-    private void updateLandingProgress(ReelAction action) {
+    private void updateLandingProgress() {
         if (landingProgress >= 1.0) {
             return;
         }
 
-        double tensionRatio = tension / lineProfile.maxTension();
-        double slackRatio =
-            lineProfile.slackThreshold() / lineProfile.maxTension();
+        double ratio = tensionRatio();
 
-        if (tensionRatio < slackRatio) {
+        if (ratio >= SWEET_MIN && ratio <= SWEET_MAX) {
+            double halfWidth = (SWEET_MAX - SWEET_MIN) * 0.5;
+            double quality =
+                1.0
+                    - Math.min(
+                        1.0,
+                        Math.abs(ratio - SWEET_IDEAL) / halfWidth
+                    );
+
+            double staminaRatio = stamina / fishProfile.maxStamina();
+            double fatigueBonus = 1.0 + (1.0 - staminaRatio) * 0.35;
+            double burstFactor = lastIntent.burst() ? 0.38 : 1.0;
+
+            landingProgress = Math.min(
+                1.0,
+                landingProgress
+                    + BASE_PROGRESS_PER_TICK
+                        * (0.58 + quality * 0.42)
+                        * fatigueBonus
+                        * burstFactor
+            );
+            return;
+        }
+
+        if (ratio < SLACK_TENSION) {
             landingProgress = Math.max(
                 0.0,
-                landingProgress - SLACK_PROGRESS_LOSS_PER_TICK
+                landingProgress - SLACK_PROGRESS_LOSS
             );
             return;
         }
 
-        if (action != ReelAction.REEL_IN || tensionRatio > 1.0) {
-            return;
-        }
-
-        double tensionEfficiency;
-        if (tensionRatio <= SAFE_TENSION_MAX_RATIO) {
-            double safeSpan = Math.max(
-                0.001,
-                SAFE_TENSION_MAX_RATIO - slackRatio
+        if (ratio > HIGH_TENSION) {
+            landingProgress = Math.max(
+                0.0,
+                landingProgress - HIGH_PROGRESS_LOSS
             );
-            double safePosition =
-                (tensionRatio - slackRatio) / safeSpan;
-
-            // The middle of the green zone is most efficient. Near either
-            // edge, progress still advances but more slowly.
-            tensionEfficiency =
-                0.55 + 0.45 * (1.0 - Math.abs(safePosition * 2.0 - 1.0));
-        } else {
-            double highPosition =
-                (tensionRatio - SAFE_TENSION_MAX_RATIO)
-                    / (1.0 - SAFE_TENSION_MAX_RATIO);
-            tensionEfficiency =
-                0.65 - 0.30 * Math.min(1.0, highPosition);
-        }
-
-        double staminaRatio = stamina / fishProfile.maxStamina();
-        double fatigueAdvantage = 1.0 + (1.0 - staminaRatio) * 0.60;
-        double stateFactor = lastIntent.burst()
-            ? BURST_PROGRESS_FACTOR
-            : 1.0;
-
-        if (phase == FightPhase.TIRED
-            || staminaRatio <= fishProfile.tiredThreshold()) {
-            stateFactor *= TIRED_PROGRESS_FACTOR;
-        }
-
-        double gain =
-            BASE_PROGRESS_PER_TICK
-                * tensionEfficiency
-                * fatigueAdvantage
-                * stateFactor;
-
-        landingProgress = Math.min(1.0, landingProgress + gain);
-    }
-
-    private void applyProgressPull(double progressDelta) {
-        if (progressDelta <= 0.0) {
             return;
         }
 
-        double fightSpan =
-            Math.max(0.0, initialDistance - lineProfile.catchDistance());
-        distance = Math.max(
-            lineProfile.catchDistance(),
-            distance - fightSpan * progressDelta
+        landingProgress = Math.max(
+            0.0,
+            landingProgress - SOFT_PROGRESS_LOSS
         );
     }
 
     private void updateStamina() {
-        if (tension >= lineProfile.slackThreshold()) {
-            double controlledLoad =
-                Math.min(1.0, tension / lineProfile.maxTension());
+        double ratio = tensionRatio();
+
+        if (ratio >= SWEET_MIN && ratio <= SWEET_MAX) {
             double drain =
                 fishProfile.staminaDrainRate()
-                    * controlledLoad
-                    * Math.max(0.2, lastIntent.effort());
+                    * (0.38 + lastIntent.effort() * 0.62);
 
             stamina = Math.max(0.0, stamina - drain);
             return;
         }
 
-        if (!lastIntent.burst()) {
+        if (ratio < SWEET_MIN && !lastIntent.burst()) {
             stamina = Math.min(
                 fishProfile.maxStamina(),
                 stamina + fishProfile.recoveryRate()
@@ -258,18 +224,62 @@ public final class FishingFight {
         }
     }
 
-    private void updateFailurePressure() {
-        if (tension < lineProfile.slackThreshold()
-            && landingProgress < 1.0) {
-            slackTicks++;
-        } else {
-            slackTicks = Math.max(0, slackTicks - 2);
+    private void updateVisualDistance() {
+        double span = Math.max(
+            0.0,
+            initialDistance - lineProfile.catchDistance()
+        );
+
+        double target =
+            lineProfile.catchDistance()
+                + span * (1.0 - landingProgress);
+
+        if (lastIntent.burst()) {
+            target += Math.min(
+                1.4,
+                lastIntent.outwardVelocity() * 12.0
+            );
         }
 
-        if (tension > lineProfile.maxTension()) {
-            overTensionTicks++;
+        distance +=
+            (target - distance)
+                * (lastIntent.burst() ? 0.20 : 0.12);
+
+        distance = Math.max(
+            lineProfile.catchDistance(),
+            distance
+        );
+
+        double slack =
+            Math.max(0.0, SWEET_IDEAL - tensionRatio()) * 2.2;
+
+        lineLength = Math.min(
+            lineProfile.maxLineLength(),
+            distance + slack
+        );
+    }
+
+    private void updateFailurePressure() {
+        double ratio = tensionRatio();
+
+        if (ratio < SLACK_TENSION && landingProgress < 1.0) {
+            slackTicks++;
         } else {
-            overTensionTicks = Math.max(0, overTensionTicks - 2);
+            slackTicks = Math.max(0, slackTicks - 3);
+        }
+
+        if (ratio >= BREAK_TENSION) {
+            int pressure =
+                ratio >= 1.15
+                    ? 3
+                    : ratio >= 1.05
+                        ? 2
+                        : 1;
+            overTensionTicks += pressure;
+        } else if (ratio < HIGH_TENSION) {
+            overTensionTicks = Math.max(0, overTensionTicks - 4);
+        } else {
+            overTensionTicks = Math.max(0, overTensionTicks - 1);
         }
     }
 
@@ -284,13 +294,9 @@ public final class FishingFight {
             return;
         }
 
-        if (landingProgress >= 1.0
-            && tension <= lineProfile.maxTension()) {
-            distance = Math.min(distance, lineProfile.catchDistance());
-            lineLength = Math.min(
-                lineLength,
-                lineProfile.catchDistance() + lineProfile.reelRate() * 2.0
-            );
+        if (landingProgress >= 1.0) {
+            distance = lineProfile.catchDistance();
+            lineLength = lineProfile.catchDistance();
             phase = FightPhase.CAUGHT;
             return;
         }
@@ -301,8 +307,20 @@ public final class FishingFight {
             : FightPhase.FIGHTING;
     }
 
-    private void recalculateTension() {
-        double extension = Math.max(0.0, distance - lineLength);
-        tension = extension * lineProfile.stiffness();
+    private double breakRisk() {
+        return Math.min(
+            1.0,
+            overTensionTicks / (double) lineProfile.breakGraceTicks()
+        );
+    }
+
+    private double tensionRatio() {
+        return lineProfile.maxTension() <= 0.0
+            ? 0.0
+            : tension / lineProfile.maxTension();
+    }
+
+    private static double clamp(double value, double min, double max) {
+        return Math.max(min, Math.min(max, value));
     }
 }

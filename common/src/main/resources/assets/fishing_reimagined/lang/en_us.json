@@ -1,6 +1,6 @@
 {
   "hud.fishing_reimagined.tension": "Line tension: %s",
-  "hud.fishing_reimagined.progress": "Landing progress: %s%%",
+  "hud.fishing_reimagined.progress": "Catch progress: %s%%",
   "hud.fishing_reimagined.reel_in": "[LMB] Reel in",
   "hud.fishing_reimagined.pay_out": "[RMB] Pay out",
   "hud.fishing_reimagined.action.reel": "REEL IN",
@@ -8,10 +8,14 @@
   "hud.fishing_reimagined.action.reel_key": "%s  REEL IN",
   "hud.fishing_reimagined.action.release_key": "%s  PAY OUT",
   "hud.fishing_reimagined.action.hold": "HOLD",
-  "hud.fishing_reimagined.tension.slack": "SLACK",
-  "hud.fishing_reimagined.tension.good": "CONTROLLED",
+  "hud.fishing_reimagined.control.reeling": "Hold %s · REEL",
+  "hud.fishing_reimagined.control.releasing": "Release %s · PAY OUT",
+  "hud.fishing_reimagined.break_risk": "SNAP RISK %s%%",
+  "hud.fishing_reimagined.tension.slack": "LINE SLACK",
+  "hud.fishing_reimagined.tension.low": "LOW TENSION",
+  "hud.fishing_reimagined.tension.good": "KEEP IT HERE",
   "hud.fishing_reimagined.tension.high": "HIGH TENSION",
-  "hud.fishing_reimagined.tension.critical": "LINE AT RISK",
+  "hud.fishing_reimagined.tension.critical": "DANGER — RELEASE",
   "hud.fishing_reimagined.fish.fighting": "Fish: fighting",
   "hud.fishing_reimagined.fish.burst": "Fish: burst run",
   "hud.fishing_reimagined.fish.tired": "Fish: tired",
@@ -19,5 +23,9 @@
   "hud.fishing_reimagined.fish.tired_hint": "TIRED — REEL NOW",
   "hud.fishing_reimagined.fish.burst_hint_key": "BURST — %s TO PAY OUT",
   "hud.fishing_reimagined.fish.tired_hint_key": "TIRED — %s TO REEL",
-  "hud.fishing_reimagined.fish.landing_hint": "LANDING FISH"
+  "hud.fishing_reimagined.fish.burst_release": "FISH RUNNING — RELEASE %s!",
+  "hud.fishing_reimagined.fish.tired_balance": "FISH TIRED — HOLD THE GREEN",
+  "hud.fishing_reimagined.fish.landing_hint": "LANDING FISH",
+  "message.fishing_reimagined.line_broken": "The line snapped!",
+  "message.fishing_reimagined.fish_escaped": "The fish got away!"
 }

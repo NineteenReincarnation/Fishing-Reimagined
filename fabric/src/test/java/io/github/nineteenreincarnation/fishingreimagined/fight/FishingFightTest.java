@@ -11,7 +11,7 @@ final class FishingFightTest {
         (profile, random) -> snapshot -> FishIntent.CALM;
 
     @Test
-    void reelingInCreatesLoadAndShortensTheLine() {
+    void holdingReelRaisesTension() {
         FishingFight fight = new FishingFight(
             FishProfile.PROTOTYPE,
             LineProfile.PROTOTYPE,
@@ -21,239 +21,149 @@ final class FishingFightTest {
             10.0
         );
 
-        FightSnapshot before = fight.snapshot();
-        FightSnapshot after =
-            fight.tick(ReelAction.REEL_IN);
+        double before = fight.snapshot().tensionRatio();
+        double after = fight.tick(ReelAction.REEL_IN).tensionRatio();
 
-        assertTrue(
-            after.lineLength() < before.lineLength()
-        );
-        assertTrue(
-            after.tension() > before.tension()
-        );
+        assertTrue(after > before);
     }
 
     @Test
-    void controlledReelingAdvancesLandingProgress() {
+    void releasingLineLowersTension() {
         FishingFight fight = new FishingFight(
             FishProfile.PROTOTYPE,
             LineProfile.PROTOTYPE,
             STILL_FISH,
             RandomGenerator.getDefault(),
             10.0,
-            8.0
+            10.0
         );
 
-        FightSnapshot before = fight.snapshot();
-        FightSnapshot after =
-            fight.tick(ReelAction.REEL_IN);
+        fight.tick(ReelAction.REEL_IN);
+        double before = fight.snapshot().tensionRatio();
+        double after = fight.tick(ReelAction.PAY_OUT).tensionRatio();
 
-        assertTrue(
-            after.landingProgress()
-                > before.landingProgress()
-        );
-        assertTrue(after.distance() < before.distance());
+        assertTrue(after < before);
     }
 
     @Test
-    void payingOutRelievesExistingTension() {
+    void sweetSpotBuildsCatchProgress() {
         FishingFight fight = new FishingFight(
             FishProfile.PROTOTYPE,
             LineProfile.PROTOTYPE,
             STILL_FISH,
             RandomGenerator.getDefault(),
             10.0,
-            9.6
+            10.0
         );
 
-        FightSnapshot before = fight.snapshot();
-        FightSnapshot after =
-            fight.tick(ReelAction.PAY_OUT);
+        double before = fight.snapshot().landingProgress();
+        FightSnapshot result = fight.tick(ReelAction.HOLD);
 
-        assertTrue(
-            after.tension() < before.tension()
-        );
+        assertTrue(result.landingProgress() > before);
     }
 
     @Test
-    void slackCanRemovePreviouslyEarnedProgress() {
+    void tooMuchSlackLosesProgress() {
         FishingFight fight = new FishingFight(
             FishProfile.PROTOTYPE,
             LineProfile.PROTOTYPE,
             STILL_FISH,
             RandomGenerator.getDefault(),
             10.0,
-            8.0
+            10.0
         );
 
-        FightSnapshot gained =
-            fight.tick(ReelAction.REEL_IN);
+        for (int i = 0; i < 8; i++) {
+            fight.tick(ReelAction.HOLD);
+        }
+
+        double gained = fight.snapshot().landingProgress();
 
         while (fight.snapshot().tensionRatio() >= 0.08) {
             fight.tick(ReelAction.PAY_OUT);
         }
 
-        FightSnapshot afterSlack =
-            fight.tick(ReelAction.HOLD);
-
-        assertTrue(
-            afterSlack.landingProgress()
-                < gained.landingProgress()
-        );
+        FightSnapshot result = fight.tick(ReelAction.PAY_OUT);
+        assertTrue(result.landingProgress() < gained);
     }
 
     @Test
-    void sustainedSlackLetsTheFishEscape() {
-        FishProfile easyEscape = new FishProfile(
-            0.0,
-            1.0,
-            100.0,
-            0.0,
-            1.0,
-            1,
-            1,
-            0.0,
-            0.0,
-            3,
-            0.25
-        );
-
-        FishingFight fight = new FishingFight(
-            easyEscape,
-            LineProfile.PROTOTYPE,
-            STILL_FISH,
-            RandomGenerator.getDefault(),
-            10.0,
-            12.0
-        );
-
-        fight.tick(ReelAction.HOLD);
-        fight.tick(ReelAction.HOLD);
-        FightSnapshot result =
-            fight.tick(ReelAction.HOLD);
-
-        assertEquals(
-            FightPhase.ESCAPED,
-            result.phase()
-        );
-    }
-
-    @Test
-    void sustainedOverloadBreaksTheLine() {
-        LineProfile fragileLine = new LineProfile(
-            10.0,
-            1.0,
-            50.0,
-            0.05,
-            0.1,
-            0.01,
-            2,
-            1.0,
-            40.0
-        );
+    void sustainedRedZoneBreaksLine() {
+        FishBehavior hardPull =
+            (profile, random) ->
+                snapshot ->
+                    new FishIntent(0.12, 0.0, 1.0, true);
 
         FishingFight fight = new FishingFight(
             FishProfile.PROTOTYPE,
-            fragileLine,
-            STILL_FISH,
+            LineProfile.PROTOTYPE,
+            hardPull,
             RandomGenerator.getDefault(),
             10.0,
-            9.0
+            10.0
         );
 
-        fight.tick(ReelAction.HOLD);
-        FightSnapshot result =
-            fight.tick(ReelAction.HOLD);
+        FightSnapshot result = fight.snapshot();
 
-        assertEquals(
-            FightPhase.LINE_BROKEN,
-            result.phase()
-        );
+        for (int i = 0; i < 80 && !result.isTerminal(); i++) {
+            result = fight.tick(ReelAction.REEL_IN);
+        }
+
+        assertEquals(FightPhase.LINE_BROKEN, result.phase());
+        assertEquals(1.0, result.breakRisk());
     }
 
     @Test
-    void fishWithinLandingRangeCanBeCaught() {
-        FishingFight fight = new FishingFight(
-            FishProfile.PROTOTYPE,
-            LineProfile.PROTOTYPE,
-            STILL_FISH,
-            RandomGenerator.getDefault(),
-            1.4,
-            1.4
-        );
-
-        FightSnapshot result =
-            fight.tick(ReelAction.HOLD);
-
-        assertEquals(
-            FightPhase.CAUGHT,
-            result.phase()
-        );
-    }
-
-    @Test
-    void burstReelingMakesLessProgressThanCalmReeling() {
-        FishBehavior calm =
-            (profile, random) -> snapshot ->
-                new FishIntent(
-                    0.0,
-                    0.0,
-                    0.28,
-                    false
-                );
-        FishBehavior burst =
-            (profile, random) -> snapshot ->
-                new FishIntent(
-                    0.0,
-                    0.0,
-                    1.0,
-                    true
-                );
-
-        FishingFight calmFight = new FishingFight(
-            FishProfile.PROTOTYPE,
-            LineProfile.PROTOTYPE,
-            calm,
-            RandomGenerator.getDefault(),
-            10.0,
-            8.0
-        );
-        FishingFight burstFight = new FishingFight(
-            FishProfile.PROTOTYPE,
-            LineProfile.PROTOTYPE,
-            burst,
-            RandomGenerator.getDefault(),
-            10.0,
-            8.0
-        );
-
-        double calmProgress =
-            calmFight.tick(ReelAction.REEL_IN)
-                .landingProgress();
-        double burstProgress =
-            burstFight.tick(ReelAction.REEL_IN)
-                .landingProgress();
-
-        assertTrue(calmProgress > burstProgress);
-        assertTrue(burstProgress > 0.0);
-    }
-
-    @Test
-    void overloadedLineDoesNotRewardProgress() {
+    void releasingFromDangerRecoversBreakRisk() {
         FishingFight fight = new FishingFight(
             FishProfile.PROTOTYPE,
             LineProfile.PROTOTYPE,
             STILL_FISH,
             RandomGenerator.getDefault(),
             10.0,
-            5.0
+            10.0
         );
 
-        FightSnapshot result =
-            fight.tick(ReelAction.REEL_IN);
+        for (int i = 0; i < 18; i++) {
+            FightSnapshot snapshot = fight.tick(ReelAction.REEL_IN);
+            if (snapshot.breakRisk() > 0.0) {
+                break;
+            }
+        }
 
-        assertEquals(0.0, result.landingProgress());
-        assertTrue(result.tensionRatio() > 1.0);
+        double risk = fight.snapshot().breakRisk();
+        assertTrue(risk > 0.0);
+
+        for (int i = 0; i < 8; i++) {
+            fight.tick(ReelAction.PAY_OUT);
+        }
+
+        assertTrue(fight.snapshot().breakRisk() < risk);
     }
 
+    @Test
+    void completingProgressCatchesFish() {
+        FishingFight fight = new FishingFight(
+            FishProfile.PROTOTYPE,
+            LineProfile.PROTOTYPE,
+            STILL_FISH,
+            RandomGenerator.getDefault(),
+            10.0,
+            10.0
+        );
+
+        FightSnapshot result = fight.snapshot();
+
+        for (int i = 0; i < 500 && !result.isTerminal(); i++) {
+            ReelAction action =
+                result.tensionRatio() > 0.58
+                    ? ReelAction.PAY_OUT
+                    : ReelAction.REEL_IN;
+
+            result = fight.tick(action);
+        }
+
+        assertEquals(FightPhase.CAUGHT, result.phase());
+        assertEquals(1.0, result.landingProgress());
+    }
 }

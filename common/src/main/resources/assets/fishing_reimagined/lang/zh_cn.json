@@ -8,10 +8,14 @@
   "hud.fishing_reimagined.action.reel_key": "%s  收线",
   "hud.fishing_reimagined.action.release_key": "%s  放线",
   "hud.fishing_reimagined.action.hold": "稳住",
+  "hud.fishing_reimagined.control.reeling": "按住 %s · 收线",
+  "hud.fishing_reimagined.control.releasing": "松开 %s · 放线",
+  "hud.fishing_reimagined.break_risk": "断线风险 %s%%",
   "hud.fishing_reimagined.tension.slack": "鱼线过松",
-  "hud.fishing_reimagined.tension.good": "张力稳定",
-  "hud.fishing_reimagined.tension.high": "张力偏高",
-  "hud.fishing_reimagined.tension.critical": "即将断线",
+  "hud.fishing_reimagined.tension.low": "张力偏低",
+  "hud.fishing_reimagined.tension.good": "保持这里",
+  "hud.fishing_reimagined.tension.high": "张力过高",
+  "hud.fishing_reimagined.tension.critical": "危险！马上松线",
   "hud.fishing_reimagined.fish.fighting": "鱼况：挣扎中",
   "hud.fishing_reimagined.fish.burst": "鱼况：正在冲刺",
   "hud.fishing_reimagined.fish.tired": "鱼况：疲劳",
@@ -19,5 +23,9 @@
   "hud.fishing_reimagined.fish.tired_hint": "鱼已疲劳 — 现在收线",
   "hud.fishing_reimagined.fish.burst_hint_key": "鱼正在冲刺 — 按 %s 放线",
   "hud.fishing_reimagined.fish.tired_hint_key": "鱼已疲劳 — 按 %s 收线",
-  "hud.fishing_reimagined.fish.landing_hint": "正在拉鱼上岸"
+  "hud.fishing_reimagined.fish.burst_release": "鱼正在冲刺 — 松开 %s！",
+  "hud.fishing_reimagined.fish.tired_balance": "鱼累了 — 把张力保持在绿色",
+  "hud.fishing_reimagined.fish.landing_hint": "正在拉鱼上岸",
+  "message.fishing_reimagined.line_broken": "鱼线断了！",
+  "message.fishing_reimagined.fish_escaped": "鱼挣脱了！"
 }
