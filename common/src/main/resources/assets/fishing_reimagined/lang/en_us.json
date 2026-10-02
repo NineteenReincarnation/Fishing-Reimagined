@@ -6,5 +6,6 @@
   "hud.fishing_reimagined.burst_warning": "Fish is running! Release",
   "hud.fishing_reimagined.snap_warning": "Danger! Release now",
   "message.fishing_reimagined.line_broken": "SNAP! The line broke!",
-  "message.fishing_reimagined.fish_escaped": "The fish got away!"
+  "message.fishing_reimagined.fish_escaped": "The fish got away!",
+  "message.fishing_reimagined.fight_started": "Fish on! Hold use to reel, release to lower tension"
 }
