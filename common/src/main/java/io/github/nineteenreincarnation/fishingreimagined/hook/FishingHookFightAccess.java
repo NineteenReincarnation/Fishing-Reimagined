@@ -5,7 +5,6 @@ import net.minecraft.world.entity.player.Player;
 
 public interface FishingHookFightAccess {
     boolean fishingReimagined$isFightActive();
-
     boolean fishingReimagined$isFishBiting();
 
     boolean fishingReimagined$startFight(
@@ -14,22 +13,18 @@ public interface FishingHookFightAccess {
     );
 
     float fishingReimagined$tensionRatio();
-
     float fishingReimagined$catchProgress();
-
     float fishingReimagined$staminaRatio();
-
     float fishingReimagined$breakRisk();
-
     float fishingReimagined$fishVelocity();
-
     float fishingReimagined$lineVelocity();
-
     float fishingReimagined$dragSlip();
-
     float fishingReimagined$distance();
 
-    int fishingReimagined$fishState();
+    float fishingReimagined$fishTrackPosition();
+    float fishingReimagined$catchZonePosition();
+    float fishingReimagined$catchZoneWidth();
 
+    int fishingReimagined$fishState();
     int fishingReimagined$fishKindId();
 }
