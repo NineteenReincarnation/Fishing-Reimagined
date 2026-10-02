@@ -16,7 +16,7 @@
 - Faster prototype stamina drain so tired state can occur during a normal fight.
 - Lightweight temporary `HookedFish` fight object.
 - Synced active-fight, fish-kind, tension, progress, stamina and fish-state data.
-- Client-side hooked-fish visual proxies using vanilla fish models.
+- Client-side hooked-fish visual proxies using vanilla fish models, with distinct fighting/burst/tired movement profiles and state-change particle cues.
 - Fight HUD with line tension, landing progress, control state and fish condition.
 - Dynamic fishing-line sag driven by live tension.
 - Successful conversion into a persistent live vanilla fish entity.
@@ -35,7 +35,7 @@ GitHub Actions compiles and packages both loader targets and runs the Fabric-hos
 - Verify that controlled green-zone reeling advances progress clearly in real gameplay.
 - Verify that burst runs encourage pay-out instead of brute-force reeling.
 - Tune fight duration and stamina drain from recorded play sessions.
-- Visual hooked-fish lifecycle and cleanup.
+- F1 playtest: confirm fish visibility, state readability and cleanup during a complete fight.
 - HUD placement at different GUI scales.
 - Continuous left/right mouse input under normal latency.
 - Dynamic line rendering under shader/resource-pack combinations.
