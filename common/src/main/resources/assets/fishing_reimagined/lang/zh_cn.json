@@ -6,5 +6,6 @@
   "hud.fishing_reimagined.burst_warning": "鱼在冲刺！松开右键",
   "hud.fishing_reimagined.snap_warning": "危险！马上松开右键",
   "message.fishing_reimagined.line_broken": "啪！鱼线断了！",
-  "message.fishing_reimagined.fish_escaped": "鱼挣脱了！"
+  "message.fishing_reimagined.fish_escaped": "鱼挣脱了！",
+  "message.fishing_reimagined.fight_started": "鱼咬钩了！按住右键收线，松开降低张力"
 }
