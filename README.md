@@ -7,20 +7,20 @@ Fishing Reimagined is a vanilla-oriented fishing rework for Minecraft Java Editi
 - Minecraft: **26.2**
 - Loaders: **Fabric + NeoForge**
 - Java: **25**
-- Mod version: **1.1.17+26.2**
+- Mod version: **1.1.19+26.2**
 - Development branch: **main**
 
-The current prototype connects the shared fight simulation to vanilla fishing on both supported loaders and now exposes the fight state visually.
+The current prototype connects the shared fight simulation to vanilla fishing on both supported loaders and exposes the fight state through a centered, compact HUD and large fish movement.
 
 ## Controls
 
-After the vanilla bite, use the rod once to set the hook and enter the fight.
+Cast normally and wait for the vanilla bite. The fight starts automatically when the fish bites.
 
-- **Left mouse:** reel in
-- **Right mouse:** pay line out
-- **Neither / both:** hold
+- **Hold use (default right mouse):** reel in and build catch progress.
+- **Release use:** lower line tension.
+- **Red tension zone:** sustained overload snaps the line.
 
-During a fight the HUD shows line tension, landing progress, current input and fish condition. A temporary client-side fish visual follows the fight anchor, and line sag changes with tension.
+During a fight the centered HUD shows line tension and catch progress. The fish visual, rod pose, rope rendering and sound feedback continue to react to the fight state.
 
 ## Build
 
@@ -56,7 +56,7 @@ Artifacts are written to `fabric/build/libs/` and `neoforge/build/libs/`.
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Fight engine](docs/FIGHT_ENGINE.md)
-- [Fight physics 2.0](docs/FIGHT_PHYSICS_2.md)
+- [Reference-style rebuild](docs/REFERENCE_STYLE_REBUILD.md)
 - [Versioning](docs/VERSIONING.md)
 - [Validation status](docs/VALIDATION_STATUS.md)
 - [Playtest protocol](docs/PLAYTEST_PROTOCOL.md)
