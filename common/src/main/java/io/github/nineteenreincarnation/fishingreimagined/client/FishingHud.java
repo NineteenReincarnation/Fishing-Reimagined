@@ -13,6 +13,7 @@ public final class FishingHud {
     private static final int BAR_WIDTH = 172;
     private static final int BAR_HEIGHT = 7;
     private static final int PANEL_WIDTH = 188;
+    private static final int PANEL_HEIGHT = 74;
 
     private FishingHud() {
     }
@@ -30,7 +31,7 @@ public final class FishingHud {
 
         Font font = minecraft.font;
         int x = (graphics.guiWidth() - PANEL_WIDTH) / 2;
-        int y = graphics.guiHeight() - 96;
+        int y = graphics.guiHeight() - 124;
 
         float tension = Math.max(0.0F, access.fishingReimagined$tensionRatio());
         float progress = Mth.clamp(
@@ -38,19 +39,24 @@ public final class FishingHud {
             0.0F,
             1.0F
         );
-        float stamina = Mth.clamp(
-            access.fishingReimagined$staminaRatio(),
-            0.0F,
-            1.0F
-        );
 
         graphics.nextStratum();
-        graphics.fill(x, y, x + PANEL_WIDTH, y + 47, 0x98000000);
-        graphics.outline(x, y, PANEL_WIDTH, 47, 0xCC555555);
+        graphics.fill(
+            x,
+            y,
+            x + PANEL_WIDTH,
+            y + PANEL_HEIGHT,
+            0x98000000
+        );
+        graphics.outline(
+            x,
+            y,
+            PANEL_WIDTH,
+            PANEL_HEIGHT,
+            0xCC555555
+        );
 
         int contentX = x + 8;
-        int barX = contentX;
-        int barY = y + 14;
 
         Component tensionState = Component.translatable(
             tensionStateKey(tension)
@@ -59,16 +65,15 @@ public final class FishingHud {
             "hud.fishing_reimagined.tension",
             tensionState
         );
-        graphics.text(font, tensionLabel, contentX, y + 4, 0xFFFFFFFF);
-
-        drawTensionBar(graphics, barX, barY, tension);
+        graphics.text(font, tensionLabel, contentX, y + 5, 0xFFFFFFFF);
+        drawTensionBar(graphics, contentX, y + 16, tension);
 
         Component progressLabel = Component.translatable(
             "hud.fishing_reimagined.progress",
             Math.round(progress * 100.0F)
         );
-        graphics.text(font, progressLabel, contentX, y + 24, 0xFFFFFFFF);
-        drawProgressBar(graphics, barX, y + 34, progress, stamina);
+        graphics.text(font, progressLabel, contentX, y + 29, 0xFFFFFFFF);
+        drawProgressBar(graphics, contentX, y + 40, progress);
 
         ReelAction action = ClientFishingInput.currentAction();
         Component left = Component.translatable(
@@ -78,7 +83,7 @@ public final class FishingHud {
             "hud.fishing_reimagined.pay_out"
         );
 
-        int controlsY = y + 50;
+        int controlsY = y + 53;
         int leftColor = action == ReelAction.REEL_IN
             ? 0xFFFFFFFF
             : 0xFF8A8A8A;
@@ -103,8 +108,8 @@ public final class FishingHud {
             font,
             fishState,
             x + (PANEL_WIDTH - stateWidth) / 2,
-            controlsY + 11,
-            0xFFD8D8D8
+            y + 64,
+            fishStateColor(access.fishingReimagined$fishState())
         );
     }
 
@@ -135,17 +140,28 @@ public final class FishingHud {
             y + BAR_HEIGHT + 2,
             0xFFFFFFFF
         );
-        graphics.outline(x - 1, y - 1, width + 2, BAR_HEIGHT + 2, 0xFF000000);
+        graphics.outline(
+            x - 1,
+            y - 1,
+            width + 2,
+            BAR_HEIGHT + 2,
+            0xFF000000
+        );
     }
 
     private static void drawProgressBar(
         GuiGraphicsExtractor graphics,
         int x,
         int y,
-        float progress,
-        float stamina
+        float progress
     ) {
-        graphics.fill(x, y, x + BAR_WIDTH, y + BAR_HEIGHT, 0xFF1D1D1D);
+        graphics.fill(
+            x,
+            y,
+            x + BAR_WIDTH,
+            y + BAR_HEIGHT,
+            0xFF1D1D1D
+        );
         int filled = Math.round(BAR_WIDTH * progress);
         if (filled > 0) {
             graphics.fill(
@@ -156,16 +172,13 @@ public final class FishingHud {
                 0xFF4A8FCB
             );
         }
-
-        int staminaMarker = x + Math.round(BAR_WIDTH * stamina);
-        graphics.fill(
-            staminaMarker,
-            y,
-            Math.min(x + BAR_WIDTH, staminaMarker + 1),
-            y + BAR_HEIGHT,
-            0xFFE7E7E7
+        graphics.outline(
+            x - 1,
+            y - 1,
+            BAR_WIDTH + 2,
+            BAR_HEIGHT + 2,
+            0xFF000000
         );
-        graphics.outline(x - 1, y - 1, BAR_WIDTH + 2, BAR_HEIGHT + 2, 0xFF000000);
     }
 
     private static String tensionStateKey(float tension) {
@@ -186,6 +199,14 @@ public final class FishingHud {
             case 1 -> "hud.fishing_reimagined.fish.burst";
             case 2 -> "hud.fishing_reimagined.fish.tired";
             default -> "hud.fishing_reimagined.fish.fighting";
+        };
+    }
+
+    private static int fishStateColor(int state) {
+        return switch (state) {
+            case 1 -> 0xFFFFC75A;
+            case 2 -> 0xFF8FD0FF;
+            default -> 0xFFD8D8D8;
         };
     }
 }
