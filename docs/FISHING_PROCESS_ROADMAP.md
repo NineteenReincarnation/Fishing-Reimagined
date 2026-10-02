@@ -23,7 +23,7 @@ The reference bar is the clarity of Better Fishing plus the physical readability
 | F1 | Hooked fish visual 2.0 | Make the fish itself readable during the fight | Stronger lateral motion; burst/tired motion profiles; orientation; bubbles/splash cues; clearer depth offset | Player can identify fish position and distinguish normal fighting, burst, and tired states without reading the state text | Ready for playtest |
 | F2 | Rod and arm feedback | Make reel-in/pay-out readable from first-person animation | Rod bend from tension; backward pull under load; reel-in motion; release posture; third-person follow-up | Left/right input and dangerous tension are visually obvious even with HUD hidden | Ready for playtest |
 | F3 | Fishing line physics 2.0 | Make the line a primary state indicator | Segmented line simulation; gravity sag; tension smoothing; high-tension vibration; block collision; shoreline handling | Slack line visibly hangs, controlled line carries slight sag, critical line is taut; line does not clip straight through terrain | Ready for playtest |
-| F4 | HUD 2.0 | Reduce UI dependence while improving clarity | Compact tension indicator; progress treatment; transient action cue; burst warning; HUD scale/config | HUD can be understood at a glance and does not dominate the screen | Planned |
+| F4 | HUD 2.0 | Reduce UI dependence while improving clarity | Compact tension indicator; progress treatment; transient action cue; burst warning; HUD scale/config | HUD can be understood at a glance and does not dominate the screen | Ready for playtest |
 | F5 | Audio feedback | Add non-visual tension and fish-state information | Reel sound, drag/strain loop, burst splash, slack cue, line snap, landing hit/flop | Player can react to burst and critical tension without staring at the HUD | Planned |
 | F6 | Landing sequence | Make the successful catch feel physical | Final pull; water exit; airborne arc; line release; live fish landing and flop transition | Catch ends with one continuous physical sequence instead of an abrupt state swap | Planned |
 | F7 | Species fight profiles | Make fish types feel mechanically different | Data-driven strength, stamina, burst style, lateral style, size and landing mass | At least four vanilla fish have distinct but learnable fight behavior without changing the core rules | Planned |
@@ -121,3 +121,17 @@ Implemented in 1.1.7+26.2:
 - the implementation remains rendering-only and does not move server-authoritative fight positions
 
 This is a first terrain-collision pass, not a full rope solver. Runtime testing should focus on shore edges, fences/slabs, and whether collision correction looks stable while the fish moves.
+
+
+## F4 implementation checkpoint
+
+Implemented in 1.1.8+26.2:
+
+- removed the large developer-style fight panel
+- tension and landing progress are now compact centered bars above the hotbar area
+- the current action is shown as a short label: reel, pay out, or hold
+- normal fighting no longer adds extra state text
+- burst and tired states show short actionable hints only when they matter
+- tension labels use state-specific text color so danger can be read without studying the bar
+
+HUD scale/config remains an accessibility follow-up; the visual hierarchy itself is ready for playtest.

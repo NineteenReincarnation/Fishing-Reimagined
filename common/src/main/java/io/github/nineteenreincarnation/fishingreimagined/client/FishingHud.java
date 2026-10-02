@@ -10,15 +10,16 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.projectile.FishingHook;
 
 public final class FishingHud {
-    private static final int BAR_WIDTH = 172;
-    private static final int BAR_HEIGHT = 7;
-    private static final int PANEL_WIDTH = 188;
-    private static final int PANEL_HEIGHT = 74;
+    private static final int BAR_WIDTH = 148;
+    private static final int BAR_HEIGHT = 5;
 
     private FishingHud() {
     }
 
-    public static void render(GuiGraphicsExtractor graphics, Minecraft minecraft) {
+    public static void render(
+        GuiGraphicsExtractor graphics,
+        Minecraft minecraft
+    ) {
         if (minecraft.player == null) {
             return;
         }
@@ -30,87 +31,120 @@ public final class FishingHud {
         }
 
         Font font = minecraft.font;
-        int x = (graphics.guiWidth() - PANEL_WIDTH) / 2;
-        int y = graphics.guiHeight() - 124;
-
-        float tension = Math.max(0.0F, access.fishingReimagined$tensionRatio());
+        float tension = Math.max(
+            0.0F,
+            access.fishingReimagined$tensionRatio()
+        );
         float progress = Mth.clamp(
             access.fishingReimagined$catchProgress(),
             0.0F,
             1.0F
         );
 
+        int centerX = graphics.guiWidth() / 2;
+        int x = centerX - BAR_WIDTH / 2;
+        int y = graphics.guiHeight() - 91;
+
         graphics.nextStratum();
-        graphics.fill(
-            x,
-            y,
-            x + PANEL_WIDTH,
-            y + PANEL_HEIGHT,
-            0x98000000
-        );
-        graphics.outline(
-            x,
-            y,
-            PANEL_WIDTH,
-            PANEL_HEIGHT,
-            0xCC555555
-        );
 
-        int contentX = x + 8;
-
-        Component tensionState = Component.translatable(
+        Component tensionText = Component.translatable(
             tensionStateKey(tension)
         );
-        Component tensionLabel = Component.translatable(
-            "hud.fishing_reimagined.tension",
-            tensionState
+        int tensionTextWidth = font.width(tensionText);
+        graphics.fill(
+            centerX - tensionTextWidth / 2 - 4,
+            y - 10,
+            centerX + tensionTextWidth / 2 + 4,
+            y,
+            0x76000000
         );
-        graphics.text(font, tensionLabel, contentX, y + 5, 0xFFFFFFFF);
-        drawTensionBar(graphics, contentX, y + 16, tension);
+        graphics.text(
+            font,
+            tensionText,
+            centerX - tensionTextWidth / 2,
+            y - 9,
+            tensionColor(tension)
+        );
+        drawTensionBar(graphics, x, y + 3, tension);
 
-        Component progressLabel = Component.translatable(
-            "hud.fishing_reimagined.progress",
-            Math.round(progress * 100.0F)
+        int progressY = y + 15;
+        drawProgressBar(
+            graphics,
+            x,
+            progressY,
+            progress
         );
-        graphics.text(font, progressLabel, contentX, y + 29, 0xFFFFFFFF);
-        drawProgressBar(graphics, contentX, y + 40, progress);
+
+        String percent = Math.round(progress * 100.0F) + "%";
+        graphics.text(
+            font,
+            percent,
+            centerX - font.width(percent) / 2,
+            progressY - 9,
+            0xFFE8E8E8
+        );
 
         ReelAction action = ClientFishingInput.currentAction();
-        Component left = Component.translatable(
-            "hud.fishing_reimagined.reel_in"
-        );
-        Component right = Component.translatable(
-            "hud.fishing_reimagined.pay_out"
-        );
+        Component actionText = switch (action) {
+            case REEL_IN ->
+                Component.translatable(
+                    "hud.fishing_reimagined.action.reel"
+                );
+            case PAY_OUT ->
+                Component.translatable(
+                    "hud.fishing_reimagined.action.release"
+                );
+            case HOLD ->
+                Component.translatable(
+                    "hud.fishing_reimagined.action.hold"
+                );
+        };
 
-        int controlsY = y + 53;
-        int leftColor = action == ReelAction.REEL_IN
-            ? 0xFFFFFFFF
-            : 0xFF8A8A8A;
-        int rightColor = action == ReelAction.PAY_OUT
-            ? 0xFFFFFFFF
-            : 0xFF8A8A8A;
-
-        graphics.text(font, left, contentX, controlsY, leftColor);
+        int actionY = progressY + 11;
+        int actionWidth = font.width(actionText);
+        graphics.fill(
+            centerX - actionWidth / 2 - 4,
+            actionY - 1,
+            centerX + actionWidth / 2 + 4,
+            actionY + 10,
+            0x62000000
+        );
         graphics.text(
             font,
-            right,
-            x + PANEL_WIDTH - 8 - font.width(right),
-            controlsY,
-            rightColor
+            actionText,
+            centerX - actionWidth / 2,
+            actionY,
+            actionColor(action)
         );
 
-        Component fishState = Component.translatable(
-            fishStateKey(access.fishingReimagined$fishState())
-        );
-        int stateWidth = font.width(fishState);
-        graphics.text(
-            font,
-            fishState,
-            x + (PANEL_WIDTH - stateWidth) / 2,
-            y + 64,
-            fishStateColor(access.fishingReimagined$fishState())
-        );
+        int fishState = access.fishingReimagined$fishState();
+        if (fishState != 0) {
+            Component stateText = Component.translatable(
+                fishState == 1
+                    ? "hud.fishing_reimagined.fish.burst_hint"
+                    : "hud.fishing_reimagined.fish.tired_hint"
+            );
+            int stateWidth = font.width(stateText);
+            int stateY = y - 24;
+            graphics.fill(
+                centerX - stateWidth / 2 - 5,
+                stateY - 1,
+                centerX + stateWidth / 2 + 5,
+                stateY + 10,
+                fishState == 1
+                    ? 0x8A3B2400
+                    : 0x70202A33
+            );
+            graphics.text(
+                font,
+                stateText,
+                centerX - stateWidth / 2,
+                stateY,
+                fishState == 1
+                    ? 0xFFFFC45A
+                    : 0xFF9ED8FF
+            );
+        }
     }
 
     private static void drawTensionBar(
@@ -119,33 +153,64 @@ public final class FishingHud {
         int y,
         float tension
     ) {
-        int width = BAR_WIDTH;
-        graphics.fill(x, y, x + width, y + BAR_HEIGHT, 0xFF1D1D1D);
+        graphics.fill(
+            x - 1,
+            y - 1,
+            x + BAR_WIDTH + 1,
+            y + BAR_HEIGHT + 1,
+            0xA0000000
+        );
 
-        int slackEnd = x + Math.round(width * 0.08F / 1.25F);
-        int safeEnd = x + Math.round(width * 0.72F / 1.25F);
-        int highEnd = x + Math.round(width * 1.00F / 1.25F);
+        int slackEnd =
+            x + Math.round(BAR_WIDTH * 0.08F / 1.25F);
+        int safeEnd =
+            x + Math.round(BAR_WIDTH * 0.72F / 1.25F);
+        int highEnd =
+            x + Math.round(BAR_WIDTH * 1.00F / 1.25F);
 
-        graphics.fill(x, y, slackEnd, y + BAR_HEIGHT, 0xFF515151);
-        graphics.fill(slackEnd, y, safeEnd, y + BAR_HEIGHT, 0xFF3D8C4A);
-        graphics.fill(safeEnd, y, highEnd, y + BAR_HEIGHT, 0xFFB99737);
-        graphics.fill(highEnd, y, x + width, y + BAR_HEIGHT, 0xFFA94848);
+        graphics.fill(
+            x,
+            y,
+            slackEnd,
+            y + BAR_HEIGHT,
+            0xFF555555
+        );
+        graphics.fill(
+            slackEnd,
+            y,
+            safeEnd,
+            y + BAR_HEIGHT,
+            0xFF3F9751
+        );
+        graphics.fill(
+            safeEnd,
+            y,
+            highEnd,
+            y + BAR_HEIGHT,
+            0xFFC4A13F
+        );
+        graphics.fill(
+            highEnd,
+            y,
+            x + BAR_WIDTH,
+            y + BAR_HEIGHT,
+            0xFFC94D4D
+        );
 
-        float normalized = Mth.clamp(tension / 1.25F, 0.0F, 1.0F);
-        int marker = x + Math.round(normalized * (width - 1));
+        float normalized = Mth.clamp(
+            tension / 1.25F,
+            0.0F,
+            1.0F
+        );
+        int marker =
+            x + Math.round(normalized * (BAR_WIDTH - 1));
+
         graphics.fill(
             marker - 1,
             y - 2,
             marker + 2,
             y + BAR_HEIGHT + 2,
             0xFFFFFFFF
-        );
-        graphics.outline(
-            x - 1,
-            y - 1,
-            width + 2,
-            BAR_HEIGHT + 2,
-            0xFF000000
         );
     }
 
@@ -156,12 +221,20 @@ public final class FishingHud {
         float progress
     ) {
         graphics.fill(
+            x - 1,
+            y - 1,
+            x + BAR_WIDTH + 1,
+            y + BAR_HEIGHT + 1,
+            0xA0000000
+        );
+        graphics.fill(
             x,
             y,
             x + BAR_WIDTH,
             y + BAR_HEIGHT,
-            0xFF1D1D1D
+            0xFF1F2730
         );
+
         int filled = Math.round(BAR_WIDTH * progress);
         if (filled > 0) {
             graphics.fill(
@@ -169,16 +242,9 @@ public final class FishingHud {
                 y,
                 x + filled,
                 y + BAR_HEIGHT,
-                0xFF4A8FCB
+                0xFF4D9AD7
             );
         }
-        graphics.outline(
-            x - 1,
-            y - 1,
-            BAR_WIDTH + 2,
-            BAR_HEIGHT + 2,
-            0xFF000000
-        );
     }
 
     private static String tensionStateKey(float tension) {
@@ -194,19 +260,24 @@ public final class FishingHud {
         return "hud.fishing_reimagined.tension.critical";
     }
 
-    private static String fishStateKey(int state) {
-        return switch (state) {
-            case 1 -> "hud.fishing_reimagined.fish.burst";
-            case 2 -> "hud.fishing_reimagined.fish.tired";
-            default -> "hud.fishing_reimagined.fish.fighting";
-        };
+    private static int tensionColor(float tension) {
+        if (tension < 0.08F) {
+            return 0xFFB7B7B7;
+        }
+        if (tension < 0.72F) {
+            return 0xFFA7F1AF;
+        }
+        if (tension <= 1.0F) {
+            return 0xFFFFDA74;
+        }
+        return 0xFFFF7373;
     }
 
-    private static int fishStateColor(int state) {
-        return switch (state) {
-            case 1 -> 0xFFFFC75A;
-            case 2 -> 0xFF8FD0FF;
-            default -> 0xFFD8D8D8;
+    private static int actionColor(ReelAction action) {
+        return switch (action) {
+            case REEL_IN -> 0xFFFFFFFF;
+            case PAY_OUT -> 0xFFA8D9FF;
+            case HOLD -> 0xFFC0C0C0;
         };
     }
 }
