@@ -11,6 +11,9 @@
 - Server-authoritative reel input on Fabric and NeoForge.
 - Left-mouse reel-in and right-mouse pay-out input mapping.
 - Catch, escape and line-break terminal states.
+- Independent landing-progress model driven by controlled tension and reel input.
+- Progress-linked inward fish movement so HUD progress and world motion stay aligned.
+- Faster prototype stamina drain so tired state can occur during a normal fight.
 - Lightweight temporary `HookedFish` fight object.
 - Synced active-fight, fish-kind, tension, progress, stamina and fish-state data.
 - Client-side hooked-fish visual proxies using vanilla fish models.
@@ -18,7 +21,7 @@
 - Dynamic fishing-line sag driven by live tension.
 - Successful conversion into a persistent live vanilla fish entity.
 - Vanilla fish land-flop behavior after the catch is launched out of the water.
-- Unit tests for basic line-state transitions.
+- Unit tests for line-state and landing-progress transitions.
 
 ## Build validation
 
@@ -29,6 +32,9 @@ GitHub Actions compiles and packages both loader targets and runs the Fabric-hos
 - Client launch on Fabric.
 - Client launch on NeoForge.
 - Dedicated-server connection on both loaders.
+- Verify that controlled green-zone reeling advances progress clearly in real gameplay.
+- Verify that burst runs encourage pay-out instead of brute-force reeling.
+- Tune fight duration and stamina drain from recorded play sessions.
 - Visual hooked-fish lifecycle and cleanup.
 - HUD placement at different GUI scales.
 - Continuous left/right mouse input under normal latency.
@@ -36,7 +42,6 @@ GitHub Actions compiles and packages both loader targets and runs the Fabric-hos
 - Hook movement around shorelines and small pools.
 - Live-fish launch trajectory and landing behavior.
 - Multiplayer ownership and disconnect edge cases.
-- In-game balance and feel.
 
 ## Presentation still incomplete
 

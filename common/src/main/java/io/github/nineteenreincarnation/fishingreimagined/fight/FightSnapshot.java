@@ -9,6 +9,7 @@ public record FightSnapshot(
     double lineLength,
     double tension,
     double maxTension,
+    double landingProgress,
     int slackTicks,
     int overTensionTicks,
     FishIntent fishIntent

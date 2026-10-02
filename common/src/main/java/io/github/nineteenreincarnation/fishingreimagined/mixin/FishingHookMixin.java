@@ -27,30 +27,56 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(FishingHook.class)
-public abstract class FishingHookMixin implements FishingHookFightAccess {
-    @Unique
-    private static final EntityDataAccessor<Boolean> FISHING_REIMAGINED_FIGHT_ACTIVE =
-        SynchedEntityData.defineId(FishingHook.class, EntityDataSerializers.BOOLEAN);
+public abstract class FishingHookMixin
+    implements FishingHookFightAccess {
 
     @Unique
-    private static final EntityDataAccessor<Float> FISHING_REIMAGINED_TENSION =
-        SynchedEntityData.defineId(FishingHook.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Boolean>
+        FISHING_REIMAGINED_FIGHT_ACTIVE =
+            SynchedEntityData.defineId(
+                FishingHook.class,
+                EntityDataSerializers.BOOLEAN
+            );
 
     @Unique
-    private static final EntityDataAccessor<Float> FISHING_REIMAGINED_PROGRESS =
-        SynchedEntityData.defineId(FishingHook.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float>
+        FISHING_REIMAGINED_TENSION =
+            SynchedEntityData.defineId(
+                FishingHook.class,
+                EntityDataSerializers.FLOAT
+            );
 
     @Unique
-    private static final EntityDataAccessor<Float> FISHING_REIMAGINED_STAMINA =
-        SynchedEntityData.defineId(FishingHook.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float>
+        FISHING_REIMAGINED_PROGRESS =
+            SynchedEntityData.defineId(
+                FishingHook.class,
+                EntityDataSerializers.FLOAT
+            );
 
     @Unique
-    private static final EntityDataAccessor<Integer> FISHING_REIMAGINED_FISH_STATE =
-        SynchedEntityData.defineId(FishingHook.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Float>
+        FISHING_REIMAGINED_STAMINA =
+            SynchedEntityData.defineId(
+                FishingHook.class,
+                EntityDataSerializers.FLOAT
+            );
 
     @Unique
-    private static final EntityDataAccessor<Integer> FISHING_REIMAGINED_FISH_KIND =
-        SynchedEntityData.defineId(FishingHook.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer>
+        FISHING_REIMAGINED_FISH_STATE =
+            SynchedEntityData.defineId(
+                FishingHook.class,
+                EntityDataSerializers.INT
+            );
+
+    @Unique
+    private static final EntityDataAccessor<Integer>
+        FISHING_REIMAGINED_FISH_KIND =
+            SynchedEntityData.defineId(
+                FishingHook.class,
+                EntityDataSerializers.INT
+            );
 
     @Shadow
     private boolean biting;
@@ -62,14 +88,18 @@ public abstract class FishingHookMixin implements FishingHookFightAccess {
     private HookedFish fishingReimagined$hookedFish;
 
     @Unique
-    private InteractionHand fishingReimagined$rodHand = InteractionHand.MAIN_HAND;
+    private InteractionHand fishingReimagined$rodHand =
+        InteractionHand.MAIN_HAND;
 
     @Inject(method = "defineSynchedData", at = @At("TAIL"))
     private void fishingReimagined$defineFightData(
         SynchedEntityData.Builder builder,
         CallbackInfo ci
     ) {
-        builder.define(FISHING_REIMAGINED_FIGHT_ACTIVE, false);
+        builder.define(
+            FISHING_REIMAGINED_FIGHT_ACTIVE,
+            false
+        );
         builder.define(FISHING_REIMAGINED_TENSION, 0.0F);
         builder.define(FISHING_REIMAGINED_PROGRESS, 0.0F);
         builder.define(FISHING_REIMAGINED_STAMINA, 1.0F);
@@ -80,28 +110,35 @@ public abstract class FishingHookMixin implements FishingHookFightAccess {
     @Inject(method = "tick", at = @At("TAIL"))
     private void fishingReimagined$tickFight(CallbackInfo ci) {
         FishingHook hook = (FishingHook) (Object) this;
-        if (hook.level().isClientSide() || fishingReimagined$hookedFish == null) {
+        if (hook.level().isClientSide()
+            || fishingReimagined$hookedFish == null) {
             return;
         }
 
         Player owner = hook.getPlayerOwner();
-        if (!(hook.level() instanceof ServerLevel serverLevel) || owner == null) {
+        if (!(hook.level() instanceof ServerLevel serverLevel)
+            || owner == null) {
             fishingReimagined$finish(hook, owner);
             return;
         }
 
         nibble = Math.max(nibble, 2);
 
-        ReelAction action = ServerFishingInput.actionFor(owner);
-        FightSnapshot snapshot = fishingReimagined$hookedFish.tick(action);
+        ReelAction action =
+            ServerFishingInput.actionFor(owner);
+        FightSnapshot snapshot =
+            fishingReimagined$hookedFish.tick(action);
 
         hook.getEntityData().set(
             FISHING_REIMAGINED_TENSION,
-            (float) Math.min(2.0, snapshot.tensionRatio())
+            (float) Math.min(
+                2.0,
+                snapshot.tensionRatio()
+            )
         );
         hook.getEntityData().set(
             FISHING_REIMAGINED_PROGRESS,
-            (float) fishingReimagined$hookedFish.catchProgress(snapshot)
+            (float) snapshot.landingProgress()
         );
         hook.getEntityData().set(
             FISHING_REIMAGINED_STAMINA,
@@ -112,11 +149,19 @@ public abstract class FishingHookMixin implements FishingHookFightAccess {
             fishingReimagined$fishState(snapshot)
         );
 
-        fishingReimagined$moveHookAnchor(hook, owner, snapshot);
+        fishingReimagined$moveHookAnchor(
+            hook,
+            owner,
+            snapshot
+        );
 
         if (snapshot.phase().isTerminal()) {
             if (snapshot.phase() == FightPhase.CAUGHT) {
-                fishingReimagined$hookedFish.materialize(serverLevel, owner, hook);
+                fishingReimagined$hookedFish.materialize(
+                    serverLevel,
+                    owner,
+                    hook
+                );
             }
 
             fishingReimagined$damageRod(owner);
@@ -139,7 +184,9 @@ public abstract class FishingHookMixin implements FishingHookFightAccess {
     @Override
     public boolean fishingReimagined$isFightActive() {
         FishingHook hook = (FishingHook) (Object) this;
-        return hook.getEntityData().get(FISHING_REIMAGINED_FIGHT_ACTIVE);
+        return hook.getEntityData().get(
+            FISHING_REIMAGINED_FIGHT_ACTIVE
+        );
     }
 
     @Override
@@ -148,7 +195,10 @@ public abstract class FishingHookMixin implements FishingHookFightAccess {
     }
 
     @Override
-    public boolean fishingReimagined$startFight(Player player, InteractionHand hand) {
+    public boolean fishingReimagined$startFight(
+        Player player,
+        InteractionHand hand
+    ) {
         FishingHook hook = (FishingHook) (Object) this;
         if (hook.level().isClientSide()
             || fishingReimagined$hookedFish != null
@@ -157,57 +207,87 @@ public abstract class FishingHookMixin implements FishingHookFightAccess {
             return false;
         }
 
-        fishingReimagined$hookedFish = HookedFish.create(
-            player,
-            hook,
-            hook.level().getRandom()
-        );
+        fishingReimagined$hookedFish =
+            HookedFish.create(
+                player,
+                hook,
+                hook.level().getRandom()
+            );
         fishingReimagined$rodHand = hand;
 
-        hook.getEntityData().set(FISHING_REIMAGINED_FIGHT_ACTIVE, true);
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_FIGHT_ACTIVE,
+            true
+        );
         hook.getEntityData().set(
             FISHING_REIMAGINED_FISH_KIND,
-            fishingReimagined$hookedFish.kind().networkId()
+            fishingReimagined$hookedFish
+                .kind()
+                .networkId()
         );
-        hook.getEntityData().set(FISHING_REIMAGINED_TENSION, 0.0F);
-        hook.getEntityData().set(FISHING_REIMAGINED_PROGRESS, 0.0F);
-        hook.getEntityData().set(FISHING_REIMAGINED_STAMINA, 1.0F);
-        hook.getEntityData().set(FISHING_REIMAGINED_FISH_STATE, 0);
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_TENSION,
+            0.0F
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_PROGRESS,
+            0.0F
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_STAMINA,
+            1.0F
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_FISH_STATE,
+            0
+        );
         return true;
     }
 
     @Override
     public float fishingReimagined$tensionRatio() {
         FishingHook hook = (FishingHook) (Object) this;
-        return hook.getEntityData().get(FISHING_REIMAGINED_TENSION);
+        return hook.getEntityData().get(
+            FISHING_REIMAGINED_TENSION
+        );
     }
 
     @Override
     public float fishingReimagined$catchProgress() {
         FishingHook hook = (FishingHook) (Object) this;
-        return hook.getEntityData().get(FISHING_REIMAGINED_PROGRESS);
+        return hook.getEntityData().get(
+            FISHING_REIMAGINED_PROGRESS
+        );
     }
 
     @Override
     public float fishingReimagined$staminaRatio() {
         FishingHook hook = (FishingHook) (Object) this;
-        return hook.getEntityData().get(FISHING_REIMAGINED_STAMINA);
+        return hook.getEntityData().get(
+            FISHING_REIMAGINED_STAMINA
+        );
     }
 
     @Override
     public int fishingReimagined$fishState() {
         FishingHook hook = (FishingHook) (Object) this;
-        return hook.getEntityData().get(FISHING_REIMAGINED_FISH_STATE);
+        return hook.getEntityData().get(
+            FISHING_REIMAGINED_FISH_STATE
+        );
     }
 
     @Override
     public int fishingReimagined$fishKindId() {
         FishingHook hook = (FishingHook) (Object) this;
-        return hook.getEntityData().get(FISHING_REIMAGINED_FISH_KIND);
+        return hook.getEntityData().get(
+            FISHING_REIMAGINED_FISH_KIND
+        );
     }
 
     @Unique
-    private int fishingReimagined$fishState(FightSnapshot snapshot) {
+    private int fishingReimagined$fishState(
+        FightSnapshot snapshot
+    ) {
         if (snapshot.phase() == FightPhase.TIRED) {
             return 2;
         }
@@ -220,35 +300,78 @@ public abstract class FishingHookMixin implements FishingHookFightAccess {
         Player owner,
         FightSnapshot snapshot
     ) {
-        Vec3 desired = fishingReimagined$hookedFish.desiredPosition(owner, snapshot);
-        BlockPos desiredPos = BlockPos.containing(desired.x, desired.y, desired.z);
+        Vec3 desired =
+            fishingReimagined$hookedFish.desiredPosition(
+                owner,
+                snapshot
+            );
+        BlockPos desiredPos =
+            BlockPos.containing(
+                desired.x,
+                desired.y,
+                desired.z
+            );
 
-        if (hook.level().getFluidState(desiredPos).is(FluidTags.WATER)) {
-            hook.setPos(desired.x, desired.y, desired.z);
+        if (hook.level()
+            .getFluidState(desiredPos)
+            .is(FluidTags.WATER)) {
+            hook.setPos(
+                desired.x,
+                desired.y,
+                desired.z
+            );
             hook.setDeltaMovement(Vec3.ZERO);
         }
     }
 
     @Unique
-    private void fishingReimagined$damageRod(Player owner) {
-        ItemStack rod = owner.getItemInHand(fishingReimagined$rodHand);
+    private void fishingReimagined$damageRod(
+        Player owner
+    ) {
+        ItemStack rod =
+            owner.getItemInHand(
+                fishingReimagined$rodHand
+            );
         if (rod.is(Items.FISHING_ROD)) {
-            rod.hurtAndBreak(1, owner, fishingReimagined$rodHand.asEquipmentSlot());
+            rod.hurtAndBreak(
+                1,
+                owner,
+                fishingReimagined$rodHand
+                    .asEquipmentSlot()
+            );
         }
     }
 
     @Unique
-    private void fishingReimagined$finish(FishingHook hook, Player owner) {
+    private void fishingReimagined$finish(
+        FishingHook hook,
+        Player owner
+    ) {
         if (owner != null) {
             ServerFishingInput.clear(owner);
         }
 
         fishingReimagined$hookedFish = null;
-        hook.getEntityData().set(FISHING_REIMAGINED_FIGHT_ACTIVE, false);
-        hook.getEntityData().set(FISHING_REIMAGINED_TENSION, 0.0F);
-        hook.getEntityData().set(FISHING_REIMAGINED_PROGRESS, 0.0F);
-        hook.getEntityData().set(FISHING_REIMAGINED_STAMINA, 1.0F);
-        hook.getEntityData().set(FISHING_REIMAGINED_FISH_STATE, 0);
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_FIGHT_ACTIVE,
+            false
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_TENSION,
+            0.0F
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_PROGRESS,
+            0.0F
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_STAMINA,
+            1.0F
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_FISH_STATE,
+            0
+        );
         hook.discard();
     }
 }

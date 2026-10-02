@@ -22,27 +22,31 @@ public final class HookedFish {
     private final HookedFishKind kind;
     private final FishingFight fight;
     private final double waterY;
-    private final double initialDistance;
     private double bearing;
 
     private HookedFish(
         HookedFishKind kind,
         FishingFight fight,
         double waterY,
-        double initialDistance,
         double bearing
     ) {
         this.kind = kind;
         this.fight = fight;
         this.waterY = waterY;
-        this.initialDistance = initialDistance;
         this.bearing = bearing;
     }
 
-    public static HookedFish create(Player owner, FishingHook hook, RandomSource random) {
+    public static HookedFish create(
+        Player owner,
+        FishingHook hook,
+        RandomSource random
+    ) {
         double dx = hook.getX() - owner.getX();
         double dz = hook.getZ() - owner.getZ();
-        double distance = Math.max(2.0, Math.min(30.0, Math.sqrt(dx * dx + dz * dz)));
+        double distance = Math.max(
+            2.0,
+            Math.min(30.0, Math.sqrt(dx * dx + dz * dz))
+        );
         double bearing = Math.atan2(dz, dx);
         HookedFishKind kind = HookedFishKind.random(random);
 
@@ -59,19 +63,27 @@ public final class HookedFish {
             kind,
             fight,
             hook.getY(),
-            distance,
             bearing
         );
     }
 
     public FightSnapshot tick(ReelAction action) {
         FightSnapshot snapshot = fight.tick(action);
-        bearing += snapshot.fishIntent().lateralTurnRadians() * TURN_RESPONSE;
+        bearing +=
+            snapshot.fishIntent().lateralTurnRadians()
+                * TURN_RESPONSE;
         return snapshot;
     }
 
-    public Vec3 desiredPosition(Player owner, FightSnapshot snapshot) {
-        double radius = Math.min(MAX_VISUAL_RADIUS, Math.max(0.0, snapshot.distance()));
+    public Vec3 desiredPosition(
+        Player owner,
+        FightSnapshot snapshot
+    ) {
+        double radius = Math.min(
+            MAX_VISUAL_RADIUS,
+            Math.max(0.0, snapshot.distance())
+        );
+
         return new Vec3(
             owner.getX() + Math.cos(bearing) * radius,
             waterY,
@@ -79,32 +91,46 @@ public final class HookedFish {
         );
     }
 
-    public double catchProgress(FightSnapshot snapshot) {
-        double catchDistance = LineProfile.PROTOTYPE.catchDistance();
-        double span = Math.max(0.001, initialDistance - catchDistance);
-        return Math.max(
-            0.0,
-            Math.min(1.0, (initialDistance - snapshot.distance()) / span)
-        );
-    }
-
     public HookedFishKind kind() {
         return kind;
     }
 
-    public void materialize(ServerLevel level, Player owner, FishingHook hook) {
+    public void materialize(
+        ServerLevel level,
+        Player owner,
+        FishingHook hook
+    ) {
         AbstractFish fish = kind.createEntity(level);
         if (fish == null) {
             return;
         }
 
         fish.setPersistenceRequired();
-        fish.snapTo(hook.getX(), hook.getY(), hook.getZ(), hook.getYRot(), 0.0F);
+        fish.snapTo(
+            hook.getX(),
+            hook.getY(),
+            hook.getZ(),
+            hook.getYRot(),
+            0.0F
+        );
 
-        Vec3 towardOwner = owner.position().add(0.0, 0.7, 0.0).subtract(hook.position());
-        double horizontal = Math.sqrt(towardOwner.x * towardOwner.x + towardOwner.z * towardOwner.z);
-        double yVelocity = 0.34 + Math.min(0.34, horizontal * 0.018);
-        fish.setDeltaMovement(towardOwner.x * 0.105, yVelocity, towardOwner.z * 0.105);
+        Vec3 towardOwner =
+            owner.position()
+                .add(0.0, 0.7, 0.0)
+                .subtract(hook.position());
+
+        double horizontal = Math.sqrt(
+            towardOwner.x * towardOwner.x
+                + towardOwner.z * towardOwner.z
+        );
+        double yVelocity =
+            0.34 + Math.min(0.34, horizontal * 0.018);
+
+        fish.setDeltaMovement(
+            towardOwner.x * 0.105,
+            yVelocity,
+            towardOwner.z * 0.105
+        );
 
         level.addFreshEntity(fish);
         owner.awardStat(Stats.FISH_CAUGHT, 1);

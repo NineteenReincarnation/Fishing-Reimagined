@@ -21,7 +21,7 @@ public record FishProfile(
         4.0,
         8,
         20,
-        0.34,
+        0.95,
         0.08,
         50,
         0.25
@@ -33,35 +33,52 @@ public record FishProfile(
         requirePositive(maxStamina, "maxStamina");
 
         if (burstChancePerTick < 0.0 || burstChancePerTick > 1.0) {
-            throw new IllegalArgumentException("burstChancePerTick must be in [0, 1]");
+            throw new IllegalArgumentException(
+                "burstChancePerTick must be in [0, 1]"
+            );
         }
         if (burstMultiplier < 1.0) {
-            throw new IllegalArgumentException("burstMultiplier must be >= 1");
+            throw new IllegalArgumentException(
+                "burstMultiplier must be >= 1"
+            );
         }
         if (burstMinTicks < 1 || burstMaxTicks < burstMinTicks) {
-            throw new IllegalArgumentException("invalid burst duration range");
+            throw new IllegalArgumentException(
+                "invalid burst duration range"
+            );
         }
 
-        requireNonNegative(staminaDrainRate, "staminaDrainRate");
+        requireNonNegative(
+            staminaDrainRate,
+            "staminaDrainRate"
+        );
         requireNonNegative(recoveryRate, "recoveryRate");
 
         if (slackEscapeTicks < 1) {
-            throw new IllegalArgumentException("slackEscapeTicks must be >= 1");
+            throw new IllegalArgumentException(
+                "slackEscapeTicks must be >= 1"
+            );
         }
         if (tiredThreshold < 0.0 || tiredThreshold > 1.0) {
-            throw new IllegalArgumentException("tiredThreshold must be in [0, 1]");
+            throw new IllegalArgumentException(
+                "tiredThreshold must be in [0, 1]"
+            );
         }
     }
 
     private static void requirePositive(double value, String name) {
         if (!Double.isFinite(value) || value <= 0.0) {
-            throw new IllegalArgumentException(name + " must be finite and > 0");
+            throw new IllegalArgumentException(
+                name + " must be finite and > 0"
+            );
         }
     }
 
     private static void requireNonNegative(double value, String name) {
         if (!Double.isFinite(value) || value < 0.0) {
-            throw new IllegalArgumentException(name + " must be finite and >= 0");
+            throw new IllegalArgumentException(
+                name + " must be finite and >= 0"
+            );
         }
     }
 }
