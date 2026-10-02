@@ -107,6 +107,30 @@ public abstract class FishingHookMixin
             );
 
     @Unique
+    private static final EntityDataAccessor<Float>
+        FISHING_REIMAGINED_FISH_TRACK_POSITION =
+            SynchedEntityData.defineId(
+                FishingHook.class,
+                EntityDataSerializers.FLOAT
+            );
+
+    @Unique
+    private static final EntityDataAccessor<Float>
+        FISHING_REIMAGINED_CATCH_ZONE_POSITION =
+            SynchedEntityData.defineId(
+                FishingHook.class,
+                EntityDataSerializers.FLOAT
+            );
+
+    @Unique
+    private static final EntityDataAccessor<Float>
+        FISHING_REIMAGINED_CATCH_ZONE_WIDTH =
+            SynchedEntityData.defineId(
+                FishingHook.class,
+                EntityDataSerializers.FLOAT
+            );
+
+    @Unique
     private static final EntityDataAccessor<Integer>
         FISHING_REIMAGINED_FISH_STATE =
             SynchedEntityData.defineId(
@@ -161,6 +185,9 @@ public abstract class FishingHookMixin
         builder.define(FISHING_REIMAGINED_LINE_VELOCITY, 0.0F);
         builder.define(FISHING_REIMAGINED_DRAG_SLIP, 0.0F);
         builder.define(FISHING_REIMAGINED_DISTANCE, 0.0F);
+        builder.define(FISHING_REIMAGINED_FISH_TRACK_POSITION, 0.5F);
+        builder.define(FISHING_REIMAGINED_CATCH_ZONE_POSITION, 0.5F);
+        builder.define(FISHING_REIMAGINED_CATCH_ZONE_WIDTH, 0.30F);
         builder.define(FISHING_REIMAGINED_FISH_STATE, 0);
         builder.define(FISHING_REIMAGINED_FISH_KIND, 0);
     }
@@ -249,6 +276,18 @@ public abstract class FishingHookMixin
         hook.getEntityData().set(
             FISHING_REIMAGINED_DISTANCE,
             (float) snapshot.distance()
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_FISH_TRACK_POSITION,
+            (float) snapshot.fishTrackPosition()
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_CATCH_ZONE_POSITION,
+            (float) snapshot.catchZonePosition()
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_CATCH_ZONE_WIDTH,
+            (float) snapshot.catchZoneWidth()
         );
         hook.getEntityData().set(
             FISHING_REIMAGINED_FISH_STATE,
@@ -408,6 +447,18 @@ public abstract class FishingHookMixin
                 .distanceTo(player.position())
         );
         hook.getEntityData().set(
+            FISHING_REIMAGINED_FISH_TRACK_POSITION,
+            0.5F
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_CATCH_ZONE_POSITION,
+            0.5F
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_CATCH_ZONE_WIDTH,
+            0.30F
+        );
+        hook.getEntityData().set(
             FISHING_REIMAGINED_FISH_STATE,
             0
         );
@@ -475,6 +526,30 @@ public abstract class FishingHookMixin
         FishingHook hook = (FishingHook) (Object) this;
         return hook.getEntityData().get(
             FISHING_REIMAGINED_DISTANCE
+        );
+    }
+
+    @Override
+    public float fishingReimagined$fishTrackPosition() {
+        FishingHook hook = (FishingHook) (Object) this;
+        return hook.getEntityData().get(
+            FISHING_REIMAGINED_FISH_TRACK_POSITION
+        );
+    }
+
+    @Override
+    public float fishingReimagined$catchZonePosition() {
+        FishingHook hook = (FishingHook) (Object) this;
+        return hook.getEntityData().get(
+            FISHING_REIMAGINED_CATCH_ZONE_POSITION
+        );
+    }
+
+    @Override
+    public float fishingReimagined$catchZoneWidth() {
+        FishingHook hook = (FishingHook) (Object) this;
+        return hook.getEntityData().get(
+            FISHING_REIMAGINED_CATCH_ZONE_WIDTH
         );
     }
 
@@ -706,6 +781,18 @@ public abstract class FishingHookMixin
         hook.getEntityData().set(
             FISHING_REIMAGINED_DISTANCE,
             0.0F
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_FISH_TRACK_POSITION,
+            0.5F
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_CATCH_ZONE_POSITION,
+            0.5F
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_CATCH_ZONE_WIDTH,
+            0.30F
         );
         hook.getEntityData().set(
             FISHING_REIMAGINED_FISH_STATE,
