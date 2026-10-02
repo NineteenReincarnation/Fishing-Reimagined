@@ -4,5 +4,8 @@
   "hud.fishing_reimagined.progress_label": "Catch Progress",
   "message.fishing_reimagined.line_broken": "SNAP! The line broke!",
   "message.fishing_reimagined.fish_escaped": "The fish got away!",
-  "message.fishing_reimagined.fight_started": "Fish on! Hold use to move right, release to move left, and keep the fish in the catch zone"
+  "message.fishing_reimagined.fight_started": "Fish on! Hold use to move right, release to move left, and keep the fish in the catch zone",
+  "key.fishing_reimagined.toggle_special_fishing": "Toggle Special Fishing Mode",
+  "message.fishing_reimagined.mode_enabled": "Special Fishing Mode: Enabled",
+  "message.fishing_reimagined.mode_disabled": "Special Fishing Mode: Disabled"
 }
