@@ -5,6 +5,7 @@ import io.github.nineteenreincarnation.fishingreimagined.fight.FightSnapshot;
 import io.github.nineteenreincarnation.fishingreimagined.fight.FishFightMode;
 import io.github.nineteenreincarnation.fishingreimagined.fight.ReelAction;
 import io.github.nineteenreincarnation.fishingreimagined.fight.ServerFishingInput;
+import io.github.nineteenreincarnation.fishingreimagined.fight.ServerFishingMode;
 import io.github.nineteenreincarnation.fishingreimagined.hook.FishingHookFightAccess;
 import io.github.nineteenreincarnation.fishingreimagined.hook.HookedFish;
 import net.minecraft.core.BlockPos;
@@ -210,7 +211,10 @@ public abstract class FishingHookMixin
         }
 
         if (fishingReimagined$hookedFish == null) {
-            if (!biting) {
+            if (
+                !biting
+                    || !ServerFishingMode.enabledFor(owner)
+            ) {
                 return;
             }
 
