@@ -21,6 +21,8 @@ public final class ClientFishingInput {
     }
 
     public static void tick(Minecraft minecraft) {
+        ClientHookedFishVisuals.tick(minecraft);
+
         ReelAction action = ReelAction.HOLD;
         if (isFightActive(minecraft)) {
             boolean reelIn = minecraft.options.keyAttack.isDown();
@@ -42,6 +44,10 @@ public final class ClientFishingInput {
         FishingHook hook = minecraft.player.fishing;
         return hook instanceof FishingHookFightAccess access
             && access.fishingReimagined$isFightActive();
+    }
+
+    public static ReelAction currentAction() {
+        return lastSent;
     }
 
     private static void sendIfChanged(ReelAction action) {

@@ -22,17 +22,20 @@ public final class HookedFish {
     private final HookedFishKind kind;
     private final FishingFight fight;
     private final double waterY;
+    private final double initialDistance;
     private double bearing;
 
     private HookedFish(
         HookedFishKind kind,
         FishingFight fight,
         double waterY,
+        double initialDistance,
         double bearing
     ) {
         this.kind = kind;
         this.fight = fight;
         this.waterY = waterY;
+        this.initialDistance = initialDistance;
         this.bearing = bearing;
     }
 
@@ -52,7 +55,13 @@ public final class HookedFish {
             distance
         );
 
-        return new HookedFish(kind, fight, hook.getY(), bearing);
+        return new HookedFish(
+            kind,
+            fight,
+            hook.getY(),
+            distance,
+            bearing
+        );
     }
 
     public FightSnapshot tick(ReelAction action) {
@@ -67,6 +76,15 @@ public final class HookedFish {
             owner.getX() + Math.cos(bearing) * radius,
             waterY,
             owner.getZ() + Math.sin(bearing) * radius
+        );
+    }
+
+    public double catchProgress(FightSnapshot snapshot) {
+        double catchDistance = LineProfile.PROTOTYPE.catchDistance();
+        double span = Math.max(0.001, initialDistance - catchDistance);
+        return Math.max(
+            0.0,
+            Math.min(1.0, (initialDistance - snapshot.distance()) / span)
         );
     }
 

@@ -37,6 +37,18 @@ public abstract class FishingHookMixin implements FishingHookFightAccess {
         SynchedEntityData.defineId(FishingHook.class, EntityDataSerializers.FLOAT);
 
     @Unique
+    private static final EntityDataAccessor<Float> FISHING_REIMAGINED_PROGRESS =
+        SynchedEntityData.defineId(FishingHook.class, EntityDataSerializers.FLOAT);
+
+    @Unique
+    private static final EntityDataAccessor<Float> FISHING_REIMAGINED_STAMINA =
+        SynchedEntityData.defineId(FishingHook.class, EntityDataSerializers.FLOAT);
+
+    @Unique
+    private static final EntityDataAccessor<Integer> FISHING_REIMAGINED_FISH_STATE =
+        SynchedEntityData.defineId(FishingHook.class, EntityDataSerializers.INT);
+
+    @Unique
     private static final EntityDataAccessor<Integer> FISHING_REIMAGINED_FISH_KIND =
         SynchedEntityData.defineId(FishingHook.class, EntityDataSerializers.INT);
 
@@ -59,6 +71,9 @@ public abstract class FishingHookMixin implements FishingHookFightAccess {
     ) {
         builder.define(FISHING_REIMAGINED_FIGHT_ACTIVE, false);
         builder.define(FISHING_REIMAGINED_TENSION, 0.0F);
+        builder.define(FISHING_REIMAGINED_PROGRESS, 0.0F);
+        builder.define(FISHING_REIMAGINED_STAMINA, 1.0F);
+        builder.define(FISHING_REIMAGINED_FISH_STATE, 0);
         builder.define(FISHING_REIMAGINED_FISH_KIND, 0);
     }
 
@@ -75,7 +90,6 @@ public abstract class FishingHookMixin implements FishingHookFightAccess {
             return;
         }
 
-        // Keep vanilla's bite window alive while the custom fight owns the catch.
         nibble = Math.max(nibble, 2);
 
         ReelAction action = ServerFishingInput.actionFor(owner);
@@ -84,6 +98,18 @@ public abstract class FishingHookMixin implements FishingHookFightAccess {
         hook.getEntityData().set(
             FISHING_REIMAGINED_TENSION,
             (float) Math.min(2.0, snapshot.tensionRatio())
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_PROGRESS,
+            (float) fishingReimagined$hookedFish.catchProgress(snapshot)
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_STAMINA,
+            (float) snapshot.staminaRatio()
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_FISH_STATE,
+            fishingReimagined$fishState(snapshot)
         );
 
         fishingReimagined$moveHookAnchor(hook, owner, snapshot);
@@ -144,6 +170,9 @@ public abstract class FishingHookMixin implements FishingHookFightAccess {
             fishingReimagined$hookedFish.kind().networkId()
         );
         hook.getEntityData().set(FISHING_REIMAGINED_TENSION, 0.0F);
+        hook.getEntityData().set(FISHING_REIMAGINED_PROGRESS, 0.0F);
+        hook.getEntityData().set(FISHING_REIMAGINED_STAMINA, 1.0F);
+        hook.getEntityData().set(FISHING_REIMAGINED_FISH_STATE, 0);
         return true;
     }
 
@@ -154,9 +183,35 @@ public abstract class FishingHookMixin implements FishingHookFightAccess {
     }
 
     @Override
+    public float fishingReimagined$catchProgress() {
+        FishingHook hook = (FishingHook) (Object) this;
+        return hook.getEntityData().get(FISHING_REIMAGINED_PROGRESS);
+    }
+
+    @Override
+    public float fishingReimagined$staminaRatio() {
+        FishingHook hook = (FishingHook) (Object) this;
+        return hook.getEntityData().get(FISHING_REIMAGINED_STAMINA);
+    }
+
+    @Override
+    public int fishingReimagined$fishState() {
+        FishingHook hook = (FishingHook) (Object) this;
+        return hook.getEntityData().get(FISHING_REIMAGINED_FISH_STATE);
+    }
+
+    @Override
     public int fishingReimagined$fishKindId() {
         FishingHook hook = (FishingHook) (Object) this;
         return hook.getEntityData().get(FISHING_REIMAGINED_FISH_KIND);
+    }
+
+    @Unique
+    private int fishingReimagined$fishState(FightSnapshot snapshot) {
+        if (snapshot.phase() == FightPhase.TIRED) {
+            return 2;
+        }
+        return snapshot.fishIntent().burst() ? 1 : 0;
     }
 
     @Unique
@@ -191,6 +246,9 @@ public abstract class FishingHookMixin implements FishingHookFightAccess {
         fishingReimagined$hookedFish = null;
         hook.getEntityData().set(FISHING_REIMAGINED_FIGHT_ACTIVE, false);
         hook.getEntityData().set(FISHING_REIMAGINED_TENSION, 0.0F);
+        hook.getEntityData().set(FISHING_REIMAGINED_PROGRESS, 0.0F);
+        hook.getEntityData().set(FISHING_REIMAGINED_STAMINA, 1.0F);
+        hook.getEntityData().set(FISHING_REIMAGINED_FISH_STATE, 0);
         hook.discard();
     }
 }

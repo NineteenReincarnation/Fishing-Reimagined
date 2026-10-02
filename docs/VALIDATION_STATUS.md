@@ -11,8 +11,11 @@
 - Server-authoritative reel input on Fabric and NeoForge.
 - Left-mouse reel-in and right-mouse pay-out input mapping.
 - Catch, escape and line-break terminal states.
-- Lightweight temporary `HookedFish` object.
-- Synced active-fight, fish-kind and line-tension state on the vanilla hook.
+- Lightweight temporary `HookedFish` fight object.
+- Synced active-fight, fish-kind, tension, progress, stamina and fish-state data.
+- Client-side hooked-fish visual proxies using vanilla fish models.
+- Fight HUD with line tension, landing progress, control state and fish condition.
+- Dynamic fishing-line sag driven by live tension.
 - Successful conversion into a persistent live vanilla fish entity.
 - Vanilla fish land-flop behavior after the catch is launched out of the water.
 - Unit tests for basic line-state transitions.
@@ -26,18 +29,20 @@ GitHub Actions compiles and packages both loader targets and runs the Fabric-hos
 - Client launch on Fabric.
 - Client launch on NeoForge.
 - Dedicated-server connection on both loaders.
-- Bite interception and transition into a fight in a real world.
+- Visual hooked-fish lifecycle and cleanup.
+- HUD placement at different GUI scales.
 - Continuous left/right mouse input under normal latency.
+- Dynamic line rendering under shader/resource-pack combinations.
 - Hook movement around shorelines and small pools.
 - Live-fish launch trajectory and landing behavior.
 - Multiplayer ownership and disconnect edge cases.
 - In-game balance and feel.
 
-## Presentation not implemented yet
+## Presentation still incomplete
 
-- Hooked-fish model during the fight.
-- Species-specific fight animation.
-- Rod bending.
-- Physical line sag/tension animation and sound feedback.
+- Rod bending is not implemented yet.
+- Fishing-line block collision is not implemented yet.
+- Species-specific fight animation is still limited to vanilla model animation plus movement state.
+- Audio feedback for slack, strain and burst runs is not implemented yet.
 
 A successful compile/package run is not evidence that the in-game loop or presentation is complete or balanced.

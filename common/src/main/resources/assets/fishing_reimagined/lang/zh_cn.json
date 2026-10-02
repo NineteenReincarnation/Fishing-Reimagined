@@ -1,0 +1,13 @@
+{
+  "hud.fishing_reimagined.tension": "鱼线张力：%s",
+  "hud.fishing_reimagined.progress": "收鱼进度：%s%%",
+  "hud.fishing_reimagined.reel_in": "[左键] 收线",
+  "hud.fishing_reimagined.pay_out": "[右键] 放线",
+  "hud.fishing_reimagined.tension.slack": "过松",
+  "hud.fishing_reimagined.tension.good": "稳定",
+  "hud.fishing_reimagined.tension.high": "偏紧",
+  "hud.fishing_reimagined.tension.critical": "危险",
+  "hud.fishing_reimagined.fish.fighting": "鱼况：挣扎中",
+  "hud.fishing_reimagined.fish.burst": "鱼况：正在冲刺",
+  "hud.fishing_reimagined.fish.tired": "鱼况：疲劳"
+}

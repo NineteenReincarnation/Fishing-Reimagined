@@ -6,7 +6,7 @@ Fishing Reimagined follows the same project-version convention as Argon:
 
 The project starts on the **1.1** line. There is no 1.0 line.
 
-Current development target: `1.1.1+26.2`.
+Current development target: `1.1.2+26.2`.
 
 - `X` — major project/content generation.
 - `Y` — release line.

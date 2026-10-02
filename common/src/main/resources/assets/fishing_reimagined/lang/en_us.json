@@ -1,0 +1,13 @@
+{
+  "hud.fishing_reimagined.tension": "Line tension: %s",
+  "hud.fishing_reimagined.progress": "Landing progress: %s%%",
+  "hud.fishing_reimagined.reel_in": "[LMB] Reel in",
+  "hud.fishing_reimagined.pay_out": "[RMB] Pay out",
+  "hud.fishing_reimagined.tension.slack": "Slack",
+  "hud.fishing_reimagined.tension.good": "Controlled",
+  "hud.fishing_reimagined.tension.high": "High",
+  "hud.fishing_reimagined.tension.critical": "Critical",
+  "hud.fishing_reimagined.fish.fighting": "Fish: fighting",
+  "hud.fishing_reimagined.fish.burst": "Fish: burst run",
+  "hud.fishing_reimagined.fish.tired": "Fish: tired"
+}
