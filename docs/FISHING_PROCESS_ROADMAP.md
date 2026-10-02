@@ -24,7 +24,7 @@ The reference bar is the clarity of Better Fishing plus the physical readability
 | F2 | Rod and arm feedback | Make reel-in/pay-out readable from first-person animation | Rod bend from tension; backward pull under load; reel-in motion; release posture; third-person follow-up | Left/right input and dangerous tension are visually obvious even with HUD hidden | Ready for playtest |
 | F3 | Fishing line physics 2.0 | Make the line a primary state indicator | Segmented line simulation; gravity sag; tension smoothing; high-tension vibration; block collision; shoreline handling | Slack line visibly hangs, controlled line carries slight sag, critical line is taut; line does not clip straight through terrain | Ready for playtest |
 | F4 | HUD 2.0 | Reduce UI dependence while improving clarity | Compact tension indicator; progress treatment; transient action cue; burst warning; HUD scale/config | HUD can be understood at a glance and does not dominate the screen | Ready for playtest |
-| F5 | Audio feedback | Add non-visual tension and fish-state information | Reel sound, drag/strain loop, burst splash, slack cue, line snap, landing hit/flop | Player can react to burst and critical tension without staring at the HUD | Planned |
+| F5 | Audio feedback | Add non-visual tension and fish-state information | Reel sound, drag/strain loop, burst splash, slack cue, line snap, landing hit/flop | Player can react to burst and critical tension without staring at the HUD | Ready for playtest |
 | F6 | Landing sequence | Make the successful catch feel physical | Final pull; water exit; airborne arc; line release; live fish landing and flop transition | Catch ends with one continuous physical sequence instead of an abrupt state swap | Planned |
 | F7 | Species fight profiles | Make fish types feel mechanically different | Data-driven strength, stamina, burst style, lateral style, size and landing mass | At least four vanilla fish have distinct but learnable fight behavior without changing the core rules | Planned |
 | F8 | Input and accessibility pass | Make the system robust outside the default setup | Remapping strategy, controller path, HUD options, latency smoothing, left-handed/third-person checks | No core action conflicts; feedback remains usable across common control and GUI configurations | Planned |
@@ -135,3 +135,18 @@ Implemented in 1.1.8+26.2:
 - tension labels use state-specific text color so danger can be read without studying the bar
 
 HUD scale/config remains an accessibility follow-up; the visual hierarchy itself is ready for playtest.
+
+
+## F5 implementation checkpoint
+
+Implemented in 1.1.9+26.2:
+
+- burst transitions play a short splash cue
+- tired transitions play a quieter fish cue
+- entering high/critical tension produces distinct line-strain clicks
+- becoming slack produces a release cue
+- controlled reeling produces a restrained repeating retrieve sound
+- line break, escape and successful catch each have distinct server-authoritative outcome sounds
+- all cues use vanilla sound events so no new asset pack is required yet
+
+The sound mix is intentionally conservative. Playtest should focus on whether the cues are informative without becoming repetitive.

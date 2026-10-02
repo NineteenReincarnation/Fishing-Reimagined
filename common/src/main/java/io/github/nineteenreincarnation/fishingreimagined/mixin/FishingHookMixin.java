@@ -11,6 +11,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
@@ -161,6 +162,27 @@ public abstract class FishingHookMixin
                     serverLevel,
                     owner,
                     hook
+                );
+                hook.playSound(
+                    SoundEvents.FISHING_BOBBER_RETRIEVE,
+                    0.55F,
+                    1.0F
+                );
+            } else if (
+                snapshot.phase() == FightPhase.LINE_BROKEN
+            ) {
+                hook.playSound(
+                    SoundEvents.TRIPWIRE_DETACH,
+                    0.65F,
+                    0.72F
+                );
+            } else if (
+                snapshot.phase() == FightPhase.ESCAPED
+            ) {
+                hook.playSound(
+                    SoundEvents.FISH_SWIM,
+                    0.42F,
+                    0.78F
                 );
             }
 
