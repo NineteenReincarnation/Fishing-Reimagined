@@ -152,6 +152,14 @@ public final class ClientHookedFishVisuals {
         float pitchAmplitude;
 
         switch (state) {
+            case 3 -> {
+                sideAmplitude = 0.035;
+                sideSpeed = 0.30;
+                baseDepth = -0.12;
+                verticalAmplitude = 0.015;
+                radialOffset = 0.02;
+                pitchAmplitude = 5.0F;
+            }
             case 1 -> {
                 sideAmplitude = 0.70;
                 sideSpeed = 1.05;
@@ -294,6 +302,10 @@ public final class ClientHookedFishVisuals {
         Vec3 movement,
         double time
     ) {
+        if (state == 3) {
+            return;
+        }
+
         if (state == 1) {
             if (hook.tickCount % 2 == 0) {
                 double drift =

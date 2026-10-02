@@ -7,6 +7,7 @@ import io.github.nineteenreincarnation.fishingreimagined.fight.ServerFishingInpu
 import io.github.nineteenreincarnation.fishingreimagined.hook.FishingHookFightAccess;
 import io.github.nineteenreincarnation.fishingreimagined.hook.HookedFish;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -86,11 +87,20 @@ public abstract class FishingHookMixin
     private int nibble;
 
     @Unique
+    private static final int FISHING_REIMAGINED_LANDING_TICKS = 10;
+
+    @Unique
     private HookedFish fishingReimagined$hookedFish;
 
     @Unique
     private InteractionHand fishingReimagined$rodHand =
         InteractionHand.MAIN_HAND;
+
+    @Unique
+    private int fishingReimagined$landingTicks;
+
+    @Unique
+    private Vec3 fishingReimagined$landingStart;
 
     @Inject(method = "defineSynchedData", at = @At("TAIL"))
     private void fishingReimagined$defineFightData(
@@ -150,6 +160,16 @@ public abstract class FishingHookMixin
             fishingReimagined$fishState(snapshot)
         );
 
+        if (snapshot.phase() == FightPhase.CAUGHT) {
+            fishingReimagined$handleLanding(
+                serverLevel,
+                owner,
+                hook,
+                snapshot
+            );
+            return;
+        }
+
         fishingReimagined$moveHookAnchor(
             hook,
             owner,
@@ -157,18 +177,7 @@ public abstract class FishingHookMixin
         );
 
         if (snapshot.phase().isTerminal()) {
-            if (snapshot.phase() == FightPhase.CAUGHT) {
-                fishingReimagined$hookedFish.materialize(
-                    serverLevel,
-                    owner,
-                    hook
-                );
-                hook.playSound(
-                    SoundEvents.FISHING_BOBBER_RETRIEVE,
-                    0.55F,
-                    1.0F
-                );
-            } else if (
+            if (
                 snapshot.phase() == FightPhase.LINE_BROKEN
             ) {
                 hook.playSound(
@@ -236,6 +245,8 @@ public abstract class FishingHookMixin
                 hook.level().getRandom()
             );
         fishingReimagined$rodHand = hand;
+        fishingReimagined$landingTicks = 0;
+        fishingReimagined$landingStart = null;
 
         hook.getEntityData().set(
             FISHING_REIMAGINED_FIGHT_ACTIVE,
@@ -310,10 +321,107 @@ public abstract class FishingHookMixin
     private int fishingReimagined$fishState(
         FightSnapshot snapshot
     ) {
+        if (snapshot.phase() == FightPhase.CAUGHT) {
+            return 3;
+        }
         if (snapshot.phase() == FightPhase.TIRED) {
             return 2;
         }
         return snapshot.fishIntent().burst() ? 1 : 0;
+    }
+
+    @Unique
+    private void fishingReimagined$handleLanding(
+        ServerLevel level,
+        Player owner,
+        FishingHook hook,
+        FightSnapshot snapshot
+    ) {
+        if (fishingReimagined$landingStart == null) {
+            fishingReimagined$moveHookAnchor(
+                hook,
+                owner,
+                snapshot
+            );
+            fishingReimagined$landingStart =
+                hook.position();
+
+            level.sendParticles(
+                ParticleTypes.SPLASH,
+                hook.getX(),
+                hook.getY() + 0.08,
+                hook.getZ(),
+                7,
+                0.22,
+                0.06,
+                0.22,
+                0.05
+            );
+        }
+
+        fishingReimagined$landingTicks++;
+
+        Vec3 fromPlayer =
+            fishingReimagined$landingStart
+                .subtract(owner.position());
+        Vec3 horizontal =
+            new Vec3(
+                fromPlayer.x,
+                0.0,
+                fromPlayer.z
+            );
+
+        if (horizontal.lengthSqr() < 1.0E-6) {
+            horizontal =
+                new Vec3(0.0, 0.0, 1.0);
+        } else {
+            horizontal = horizontal.normalize();
+        }
+
+        Vec3 target =
+            owner.position()
+                .add(horizontal.scale(0.90))
+                .add(0.0, 0.32, 0.0);
+
+        double t =
+            Math.min(
+                1.0,
+                fishingReimagined$landingTicks
+                    / (double) FISHING_REIMAGINED_LANDING_TICKS
+            );
+        double eased =
+            t * t * (3.0 - 2.0 * t);
+        Vec3 base =
+            fishingReimagined$landingStart
+                .lerp(target, eased);
+        double arc =
+            Math.sin(Math.PI * t) * 0.82;
+
+        hook.setPos(
+            base.x,
+            base.y + arc,
+            base.z
+        );
+        hook.setDeltaMovement(Vec3.ZERO);
+
+        if (fishingReimagined$landingTicks
+            < FISHING_REIMAGINED_LANDING_TICKS) {
+            return;
+        }
+
+        fishingReimagined$hookedFish.materialize(
+            level,
+            owner,
+            hook
+        );
+        hook.playSound(
+            SoundEvents.FISHING_BOBBER_RETRIEVE,
+            0.62F,
+            1.04F
+        );
+
+        fishingReimagined$damageRod(owner);
+        fishingReimagined$finish(hook, owner);
     }
 
     @Unique
@@ -374,6 +482,8 @@ public abstract class FishingHookMixin
         }
 
         fishingReimagined$hookedFish = null;
+        fishingReimagined$landingTicks = 0;
+        fishingReimagined$landingStart = null;
         hook.getEntityData().set(
             FISHING_REIMAGINED_FIGHT_ACTIVE,
             false

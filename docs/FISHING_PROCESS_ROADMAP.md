@@ -25,7 +25,7 @@ The reference bar is the clarity of Better Fishing plus the physical readability
 | F3 | Fishing line physics 2.0 | Make the line a primary state indicator | Segmented line simulation; gravity sag; tension smoothing; high-tension vibration; block collision; shoreline handling | Slack line visibly hangs, controlled line carries slight sag, critical line is taut; line does not clip straight through terrain | Ready for playtest |
 | F4 | HUD 2.0 | Reduce UI dependence while improving clarity | Compact tension indicator; progress treatment; transient action cue; burst warning; HUD scale/config | HUD can be understood at a glance and does not dominate the screen | Ready for playtest |
 | F5 | Audio feedback | Add non-visual tension and fish-state information | Reel sound, drag/strain loop, burst splash, slack cue, line snap, landing hit/flop | Player can react to burst and critical tension without staring at the HUD | Ready for playtest |
-| F6 | Landing sequence | Make the successful catch feel physical | Final pull; water exit; airborne arc; line release; live fish landing and flop transition | Catch ends with one continuous physical sequence instead of an abrupt state swap | Planned |
+| F6 | Landing sequence | Make the successful catch feel physical | Final pull; water exit; airborne arc; line release; live fish landing and flop transition | Catch ends with one continuous physical sequence instead of an abrupt state swap | Ready for playtest |
 | F7 | Species fight profiles | Make fish types feel mechanically different | Data-driven strength, stamina, burst style, lateral style, size and landing mass | At least four vanilla fish have distinct but learnable fight behavior without changing the core rules | Planned |
 | F8 | Input and accessibility pass | Make the system robust outside the default setup | Remapping strategy, controller path, HUD options, latency smoothing, left-handed/third-person checks | No core action conflicts; feedback remains usable across common control and GUI configurations | Planned |
 | F9 | Compatibility and runtime validation | Validate the full loop rather than only compilation | Fabric + NeoForge runtime; multiplayer; shaders/resource packs; performance; edge cases; recorded playtests | Both loaders pass real-world fishing sessions and no known blocker remains in the core fight loop | Planned |
@@ -150,3 +150,18 @@ Implemented in 1.1.9+26.2:
 - all cues use vanilla sound events so no new asset pack is required yet
 
 The sound mix is intentionally conservative. Playtest should focus on whether the cues are informative without becoming repetitive.
+
+
+## F6 implementation checkpoint
+
+Implemented in 1.1.10+26.2:
+
+- reaching 100% no longer instantly swaps the fight object into a live fish
+- the fight enters a short landing state
+- the hook/fish anchor follows a smooth ten-tick arc from the water toward a point in front of the player
+- a splash is emitted as the landing sequence begins
+- the client visual fish follows that arc rather than remaining under the bobber
+- only at the end of the arc is the normal live fish entity created
+- the live fish retains vanilla health and land-flop behavior
+
+The next playtest should verify that the arc clears common shore edges and does not place the fish inside the player or blocks.

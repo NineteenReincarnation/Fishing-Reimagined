@@ -120,9 +120,16 @@ public final class FishingHud {
         int fishState = access.fishingReimagined$fishState();
         if (fishState != 0) {
             Component stateText = Component.translatable(
-                fishState == 1
-                    ? "hud.fishing_reimagined.fish.burst_hint"
-                    : "hud.fishing_reimagined.fish.tired_hint"
+                switch (fishState) {
+                    case 1 ->
+                        "hud.fishing_reimagined.fish.burst_hint";
+                    case 2 ->
+                        "hud.fishing_reimagined.fish.tired_hint";
+                    case 3 ->
+                        "hud.fishing_reimagined.fish.landing_hint";
+                    default ->
+                        "hud.fishing_reimagined.fish.fighting";
+                }
             );
             int stateWidth = font.width(stateText);
             int stateY = y - 24;
@@ -133,7 +140,9 @@ public final class FishingHud {
                 stateY + 10,
                 fishState == 1
                     ? 0x8A3B2400
-                    : 0x70202A33
+                    : fishState == 3
+                        ? 0x70332018
+                        : 0x70202A33
             );
             graphics.text(
                 font,
@@ -142,7 +151,9 @@ public final class FishingHud {
                 stateY,
                 fishState == 1
                     ? 0xFFFFC45A
-                    : 0xFF9ED8FF
+                    : fishState == 3
+                        ? 0xFFFFE0A0
+                        : 0xFF9ED8FF
             );
         }
     }

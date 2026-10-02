@@ -14,5 +14,6 @@
   "hud.fishing_reimagined.fish.burst": "Fish: burst run",
   "hud.fishing_reimagined.fish.tired": "Fish: tired",
   "hud.fishing_reimagined.fish.burst_hint": "BURST — PAY OUT",
-  "hud.fishing_reimagined.fish.tired_hint": "TIRED — REEL NOW"
+  "hud.fishing_reimagined.fish.tired_hint": "TIRED — REEL NOW",
+  "hud.fishing_reimagined.fish.landing_hint": "LANDING FISH"
 }
