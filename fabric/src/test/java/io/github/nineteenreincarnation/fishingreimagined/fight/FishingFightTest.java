@@ -4,128 +4,113 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.random.RandomGenerator;
+import java.util.Random;
 import org.junit.jupiter.api.Test;
 
 final class FishingFightTest {
-    private static final FishBehavior CALM_FISH =
+    private static final FishBehavior GENTLE_FISH =
         (profile, random) -> snapshot ->
             new FishIntent(
                 0.0,
                 0.0,
-                0.2,
+                0.15,
                 false,
-                FishFightMode.PROBING
-            );
-
-    private static final FishBehavior BURST_FISH =
-        (profile, random) -> snapshot ->
-            new FishIntent(
-                0.12,
-                0.0,
-                1.0,
-                true,
-                FishFightMode.BURST
+                FishFightMode.TIRED
             );
 
     @Test
-    void holdingUseRaisesTension() {
-        FishingFight fight =
-            create(CALM_FISH);
+    void holdingUseMovesCatchZoneRight() {
+        FishingFight fight = create();
 
         double before =
-            fight.snapshot().tensionRatio();
+            fight.snapshot().catchZonePosition();
 
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 8; i++) {
             fight.tick(ReelAction.REEL_IN);
         }
 
         assertTrue(
-            fight.snapshot().tensionRatio()
+            fight.snapshot().catchZonePosition()
                 > before
         );
-    }
-
-    @Test
-    void releasingUseLowersTension() {
-        FishingFight fight =
-            create(CALM_FISH);
-
-        for (int i = 0; i < 14; i++) {
-            fight.tick(ReelAction.REEL_IN);
-        }
-
-        double before =
-            fight.snapshot().tensionRatio();
-
-        for (int i = 0; i < 7; i++) {
-            fight.tick(ReelAction.PAY_OUT);
-        }
 
         assertTrue(
-            fight.snapshot().tensionRatio()
-                < before
+            fight.snapshot().lineVelocity()
+                > 0.0
         );
     }
 
     @Test
-    void idealRhythmBuildsProgress() {
-        FishingFight fight =
-            create(CALM_FISH);
-
-        double before =
-            fight.snapshot().landingProgress();
-
-        for (int i = 0; i < 20; i++) {
-            fight.tick(ReelAction.REEL_IN);
-        }
-
-        assertTrue(
-            fight.snapshot().landingProgress()
-                > before
-        );
-    }
-
-    @Test
-    void progressHasPositiveMomentumAfterRelease() {
-        FishingFight fight =
-            create(CALM_FISH);
+    void releasingMovesCatchZoneLeft() {
+        FishingFight fight = create();
 
         for (int i = 0; i < 12; i++) {
             fight.tick(ReelAction.REEL_IN);
         }
 
-        double before =
-            fight.snapshot().landingProgress();
-
-        fight.tick(ReelAction.PAY_OUT);
+        for (int i = 0; i < 18; i++) {
+            fight.tick(ReelAction.PAY_OUT);
+        }
 
         assertTrue(
-            fight.snapshot().landingProgress()
+            fight.snapshot().lineVelocity()
+                < 0.0
+        );
+    }
+
+    @Test
+    void catchZoneHasControlInertia() {
+        FishingFight fight = create();
+
+        for (int i = 0; i < 10; i++) {
+            fight.tick(ReelAction.REEL_IN);
+        }
+
+        double before =
+            fight.snapshot().catchZonePosition();
+
+        FightSnapshot afterRelease =
+            fight.tick(ReelAction.PAY_OUT);
+
+        assertTrue(
+            afterRelease.catchZonePosition()
                 >= before
         );
     }
 
     @Test
-    void prolongedLowTensionPullsProgressBack() {
-        FishingFight fight =
-            create(CALM_FISH);
+    void keepingFishInZoneBuildsProgress() {
+        FishingFight fight = create();
 
-        for (int i = 0; i < 30; i++) {
-            fight.tick(ReelAction.REEL_IN);
-        }
-
-        double earned =
+        double before =
             fight.snapshot().landingProgress();
 
-        for (int i = 0; i < 35; i++) {
-            fight.tick(ReelAction.PAY_OUT);
+        for (int i = 0; i < 6; i++) {
+            FightSnapshot snapshot =
+                fight.snapshot();
+
+            ReelAction action =
+                snapshot.fishTrackPosition()
+                        > snapshot.catchZonePosition()
+                    ? ReelAction.REEL_IN
+                    : ReelAction.PAY_OUT;
+
+            fight.tick(action);
         }
 
         assertTrue(
             fight.snapshot().landingProgress()
-                < earned
+                > before
         );
+    }
+
+    @Test
+    void briefMissDoesNotInstantlyFail() {
+        FishingFight fight = create();
+
+        for (int i = 0; i < 24; i++) {
+            fight.tick(ReelAction.REEL_IN);
+        }
 
         assertFalse(
             fight.snapshot().isTerminal()
@@ -133,105 +118,27 @@ final class FishingFightTest {
     }
 
     @Test
-    void shortRedVisitDoesNotSnapLine() {
-        FishingFight fight =
-            create(BURST_FISH);
-
-        FightSnapshot snapshot =
-            fight.snapshot();
-
-        for (int i = 0; i < 30; i++) {
-            snapshot =
-                fight.tick(ReelAction.REEL_IN);
-
-            if (snapshot.breakRisk() > 0.0) {
-                break;
-            }
-        }
-
-        assertTrue(
-            snapshot.breakRisk() > 0.0
-        );
-
-        double risk =
-            snapshot.breakRisk();
-
-        for (int i = 0; i < 8; i++) {
-            snapshot =
-                fight.tick(ReelAction.PAY_OUT);
-        }
-
-        assertFalse(
-            snapshot.isTerminal()
-        );
-
-        assertTrue(
-            snapshot.breakRisk() < risk
-        );
-    }
-
-    @Test
-    void sustainedRedZoneSnapsLine() {
-        FishingFight fight =
-            create(BURST_FISH);
-
+    void trackingFeedbackLoopCanCatchFish() {
+        FishingFight fight = create();
         FightSnapshot result =
             fight.snapshot();
 
         for (
             int i = 0;
-            i < 160
-                && !result.isTerminal();
+            i < 1400 && !result.isTerminal();
             i++
         ) {
-            result =
-                fight.tick(
-                    ReelAction.REEL_IN
-                );
-        }
+            double error =
+                result.fishTrackPosition()
+                    - result.catchZonePosition();
 
-        assertEquals(
-            FightPhase.LINE_BROKEN,
-            result.phase()
-        );
+            double zoneVelocity =
+                result.lineVelocity();
 
-        assertEquals(
-            1.0,
-            result.breakRisk(),
-            1.0E-9
-        );
-    }
-
-    @Test
-    void rhythmLoopCanCatchFish() {
-        FishingFight fight =
-            create(CALM_FISH);
-
-        FightSnapshot result =
-            fight.snapshot();
-
-        for (
-            int i = 0;
-            i < 1000
-                && !result.isTerminal();
-            i++
-        ) {
-            ReelAction action;
-
-            if (result.tensionRatio() > 0.72) {
-                action =
-                    ReelAction.PAY_OUT;
-            } else if (
-                result.tensionRatio() < 0.40
-            ) {
-                action =
-                    ReelAction.REEL_IN;
-            } else {
-                action =
-                    i % 9 < 6
-                        ? ReelAction.REEL_IN
-                        : ReelAction.PAY_OUT;
-            }
+            ReelAction action =
+                error - zoneVelocity * 4.0 > 0.0
+                    ? ReelAction.REEL_IN
+                    : ReelAction.PAY_OUT;
 
             result =
                 fight.tick(action);
@@ -249,14 +156,12 @@ final class FishingFightTest {
         );
     }
 
-    private static FishingFight create(
-        FishBehavior behavior
-    ) {
+    private static FishingFight create() {
         return new FishingFight(
             FishProfile.PROTOTYPE,
             LineProfile.PROTOTYPE,
-            behavior,
-            RandomGenerator.getDefault(),
+            GENTLE_FISH,
+            new Random(7L),
             10.0,
             10.0
         );

@@ -1,10 +1,8 @@
 {
-  "hud.fishing_reimagined.tension_label": "Line Tension",
+  "hud.fishing_reimagined.track_label": "Track Fish",
+  "hud.fishing_reimagined.track_hint": "Hold →  ·  Release ←",
   "hud.fishing_reimagined.progress_label": "Catch Progress",
-  "hud.fishing_reimagined.reeling": "Hold use: Reel",
-  "hud.fishing_reimagined.release": "Release use: Ease line",
-  "hud.fishing_reimagined.snap_warning": "Danger! Release to lower tension",
   "message.fishing_reimagined.line_broken": "SNAP! The line broke!",
   "message.fishing_reimagined.fish_escaped": "The fish got away!",
-  "message.fishing_reimagined.fight_started": "Fish on! Hold use to reel, release to control tension"
+  "message.fishing_reimagined.fight_started": "Fish on! Hold use to move right, release to move left, and keep the fish in the catch zone"
 }

@@ -1,87 +1,68 @@
-# Rhythm fishing design
+# Horizontal catch-bar design
 
-Version 1.1.20+26.2 simplifies the player's decision to one repeated question:
+Version 1.1.21+26.2 replaces the tension/red-zone minigame with a horizontal tracking game inspired by the interaction structure of Stardew Valley fishing while retaining Fishing Reimagined's own implementation and world presentation.
 
-> Hold the use key, or release it?
+## Player rule
 
-The implementation can stay rich internally, but the player should not need to read fish-state labels, stamina values, drag state, distance, or reel efficiency.
+Keep the fish inside the moving catch zone.
 
-## Core loop
+There is no red tension zone in the basic minigame.
 
-- Hold use to reel and push tension upward.
-- Release use to let tension fall.
-- Keep tension moving through the useful middle range.
-- Good rhythm grows Catch Progress.
-- Let tension fall too low for too long and progress starts slipping backward.
-- Push tension too high and progress stops being useful while snap pressure accumulates.
-- Leave the red zone quickly and snap pressure recovers.
-- Stay in the red zone and the line eventually breaks.
+## Horizontal control
 
-The fish's internal behavior still changes the speed of the tension movement. It changes the rhythm, not the rules.
+The HUD contains one horizontal track.
 
-## Tension regions
+- Hold the normal use key to accelerate the catch zone to the right.
+- Release the use key to accelerate the catch zone to the left.
+- The catch zone has velocity, damping, inertia, and a small edge bounce.
+- Switching from hold to release does not reverse the zone instantly.
 
-The tension bar is intentionally divided into broad regions rather than many named mechanics.
+This preserves timing skill without requiring extra buttons.
 
-| Region | Approx. ratio | Progress behavior | Risk |
-| --- | ---: | --- | --- |
-| Very low | 0.00-0.12 | noticeable rollback | none |
-| Low | 0.12-0.28 | slow rollback | none |
-| Useful | 0.28-0.68 | fastest gain | none |
-| High | 0.68-0.90 | slower gain | none |
-| Red | 0.90+ | rollback | snap pressure |
+## Fish movement
 
-The player only needs to see the colored tension bar.
+The fish marker moves independently across the same track.
 
-## Progress momentum
+The existing internal fish modes still exist, but they are not shown as text:
 
-Catch Progress no longer changes as a hard on/off switch.
+- probing creates smaller wandering targets
+- pulling creates longer side-to-side travel
+- burst creates a fast run toward one side
+- recovering trends back toward the middle
+- tired movement is slower and shorter
 
-A hidden progress velocity is smoothed toward the current region's target rate.
+Species profiles scale movement speed and catch-zone width, so fish can feel different without changing the player's rules.
 
-This creates two important effects:
+## Progress
 
-1. after a good reel phase, releasing briefly can still carry a little positive progress;
-2. after staying loose too long, returning to good tension takes a short moment to reverse the lost momentum.
+When the fish overlaps the catch zone, Catch Progress rises.
 
-The result should feel like preserving or losing control of the fish, not toggling a UI condition.
+When the fish leaves the zone:
 
-## Red-zone pressure
+1. a short grace period prevents instant punishment;
+2. positive progress momentum fades;
+3. if the fish remains outside, progress begins falling smoothly.
 
-Entering red is not an instant failure.
+This avoids both extremes: progress never being lost, and tiny mistakes deleting progress immediately.
 
-Snap pressure accumulates over time. At the start of the red zone it takes roughly a couple of seconds of sustained abuse to break the line; deeper overload accumulates faster.
+## Escape
 
-Dropping tension below the danger range removes snap pressure substantially faster than it accumulates.
+Progress reaching zero is not an instant failure.
 
-This creates the intended pattern:
+Only after progress is empty and the fish remains uncontrolled for an additional period does escape pressure accumulate. Regaining control quickly clears that pressure.
 
-```text
-reel
-→ tension rises
-→ touch danger
-→ release
-→ tension falls
-→ reel again
-```
+## World coupling
 
-The HUD only shows an explicit warning while danger is active.
+The horizontal fish position also drives the water-world fish anchor.
 
-## Fish behavior
+A fish moving right on the HUD moves to the corresponding side of the cast direction in the world. Bursts create larger and faster world movement. The existing rope renderer, rod animation, water effects, and live-fish landing sequence remain in place.
 
-Fish states remain internal because they are useful for motion, sound, and tension pacing.
+## HUD
 
-They should not be required reading.
+The fight HUD contains only:
 
-A burst may make tension rise faster. A recovery phase may make it easier to hold the useful region. The player's rule never changes: judge the bar and choose hold or release.
-
-## HUD rule
-
-The fight HUD should contain only:
-
-- Line Tension
+- the horizontal fish/catch-zone track
 - Catch Progress
-- current hold/release hint
-- temporary snap warning
+- a minimal hold-right / release-left hint
 
-Fish-state text is deliberately omitted.
+No fish-state labels, stamina meter, tension meter, red zone, drag meter, or reel-efficiency display is required.

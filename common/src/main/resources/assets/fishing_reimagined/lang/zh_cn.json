@@ -1,10 +1,8 @@
 {
-  "hud.fishing_reimagined.tension_label": "鱼线张力",
+  "hud.fishing_reimagined.track_label": "控鱼",
+  "hud.fishing_reimagined.track_hint": "按住 →  ·  松开 ←",
   "hud.fishing_reimagined.progress_label": "收鱼进度",
-  "hud.fishing_reimagined.reeling": "按住右键：收线",
-  "hud.fishing_reimagined.release": "松开右键：放松",
-  "hud.fishing_reimagined.snap_warning": "危险！松开右键降张力",
   "message.fishing_reimagined.line_broken": "啪！鱼线断了！",
   "message.fishing_reimagined.fish_escaped": "鱼挣脱了！",
-  "message.fishing_reimagined.fight_started": "鱼咬钩了！按住右键收线，松开控制张力"
+  "message.fishing_reimagined.fight_started": "鱼咬钩了！按住右键向右，松开向左，把鱼留在捕获区"
 }
