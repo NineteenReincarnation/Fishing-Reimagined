@@ -168,16 +168,44 @@ public abstract class FishingHookMixin
     @Inject(method = "tick", at = @At("TAIL"))
     private void fishingReimagined$tickFight(CallbackInfo ci) {
         FishingHook hook = (FishingHook) (Object) this;
-        if (hook.level().isClientSide()
-            || fishingReimagined$hookedFish == null) {
+
+        if (hook.level().isClientSide()) {
             return;
         }
 
         Player owner = hook.getPlayerOwner();
         if (!(hook.level() instanceof ServerLevel serverLevel)
             || owner == null) {
-            fishingReimagined$finish(hook, owner);
+            if (fishingReimagined$hookedFish != null) {
+                fishingReimagined$finish(hook, owner);
+            }
             return;
+        }
+
+        if (fishingReimagined$hookedFish == null) {
+            if (!biting) {
+                return;
+            }
+
+            InteractionHand hand =
+                owner.getMainHandItem().is(Items.FISHING_ROD)
+                    ? InteractionHand.MAIN_HAND
+                    : InteractionHand.OFF_HAND;
+
+            fishingReimagined$startFight(
+                owner,
+                hand
+            );
+
+            if (fishingReimagined$hookedFish == null) {
+                return;
+            }
+
+            owner.sendOverlayMessage(
+                Component.translatable(
+                    "message.fishing_reimagined.fight_started"
+                )
+            );
         }
 
         nibble = Math.max(nibble, 2);
