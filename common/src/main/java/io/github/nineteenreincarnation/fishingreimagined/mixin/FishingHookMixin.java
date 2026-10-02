@@ -8,6 +8,7 @@ import io.github.nineteenreincarnation.fishingreimagined.hook.FishingHookFightAc
 import io.github.nineteenreincarnation.fishingreimagined.hook.HookedFish;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -65,6 +66,14 @@ public abstract class FishingHookMixin
             );
 
     @Unique
+    private static final EntityDataAccessor<Float>
+        FISHING_REIMAGINED_BREAK_RISK =
+            SynchedEntityData.defineId(
+                FishingHook.class,
+                EntityDataSerializers.FLOAT
+            );
+
+    @Unique
     private static final EntityDataAccessor<Integer>
         FISHING_REIMAGINED_FISH_STATE =
             SynchedEntityData.defineId(
@@ -114,6 +123,7 @@ public abstract class FishingHookMixin
         builder.define(FISHING_REIMAGINED_TENSION, 0.0F);
         builder.define(FISHING_REIMAGINED_PROGRESS, 0.0F);
         builder.define(FISHING_REIMAGINED_STAMINA, 1.0F);
+        builder.define(FISHING_REIMAGINED_BREAK_RISK, 0.0F);
         builder.define(FISHING_REIMAGINED_FISH_STATE, 0);
         builder.define(FISHING_REIMAGINED_FISH_KIND, 0);
     }
@@ -156,6 +166,10 @@ public abstract class FishingHookMixin
             (float) snapshot.staminaRatio()
         );
         hook.getEntityData().set(
+            FISHING_REIMAGINED_BREAK_RISK,
+            (float) snapshot.breakRisk()
+        );
+        hook.getEntityData().set(
             FISHING_REIMAGINED_FISH_STATE,
             fishingReimagined$fishState(snapshot)
         );
@@ -180,18 +194,39 @@ public abstract class FishingHookMixin
             if (
                 snapshot.phase() == FightPhase.LINE_BROKEN
             ) {
+                serverLevel.sendParticles(
+                    ParticleTypes.CRIT,
+                    hook.getX(),
+                    hook.getY() + 0.20,
+                    hook.getZ(),
+                    12,
+                    0.18,
+                    0.12,
+                    0.18,
+                    0.18
+                );
                 hook.playSound(
                     SoundEvents.TRIPWIRE_DETACH,
-                    0.65F,
-                    0.72F
+                    1.0F,
+                    0.62F
+                );
+                owner.sendOverlayMessage(
+                    Component.translatable(
+                        "message.fishing_reimagined.line_broken"
+                    )
                 );
             } else if (
                 snapshot.phase() == FightPhase.ESCAPED
             ) {
                 hook.playSound(
                     SoundEvents.FISH_SWIM,
-                    0.42F,
-                    0.78F
+                    0.55F,
+                    0.72F
+                );
+                owner.sendOverlayMessage(
+                    Component.translatable(
+                        "message.fishing_reimagined.fish_escaped"
+                    )
                 );
             }
 
@@ -271,6 +306,10 @@ public abstract class FishingHookMixin
             1.0F
         );
         hook.getEntityData().set(
+            FISHING_REIMAGINED_BREAK_RISK,
+            0.0F
+        );
+        hook.getEntityData().set(
             FISHING_REIMAGINED_FISH_STATE,
             0
         );
@@ -298,6 +337,14 @@ public abstract class FishingHookMixin
         FishingHook hook = (FishingHook) (Object) this;
         return hook.getEntityData().get(
             FISHING_REIMAGINED_STAMINA
+        );
+    }
+
+    @Override
+    public float fishingReimagined$breakRisk() {
+        FishingHook hook = (FishingHook) (Object) this;
+        return hook.getEntityData().get(
+            FISHING_REIMAGINED_BREAK_RISK
         );
     }
 
@@ -499,6 +546,10 @@ public abstract class FishingHookMixin
         hook.getEntityData().set(
             FISHING_REIMAGINED_STAMINA,
             1.0F
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_BREAK_RISK,
+            0.0F
         );
         hook.getEntityData().set(
             FISHING_REIMAGINED_FISH_STATE,
