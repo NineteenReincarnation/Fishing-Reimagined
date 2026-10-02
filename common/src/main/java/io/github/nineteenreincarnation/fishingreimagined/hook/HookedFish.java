@@ -21,22 +21,22 @@ public final class HookedFish {
     private final HookedFishKind kind;
     private final FishingFight fight;
     private final double waterY;
+    private final double baseBearing;
     private final double motionPhase;
 
-    private double bearing;
-    private double angularVelocity;
+    private double lateralAngle;
 
     private HookedFish(
         HookedFishKind kind,
         FishingFight fight,
         double waterY,
-        double bearing,
+        double baseBearing,
         double motionPhase
     ) {
         this.kind = kind;
         this.fight = fight;
         this.waterY = waterY;
-        this.bearing = bearing;
+        this.baseBearing = baseBearing;
         this.motionPhase = motionPhase;
     }
 
@@ -45,38 +45,51 @@ public final class HookedFish {
         FishingHook hook,
         RandomSource random
     ) {
-        double dx = hook.getX() - owner.getX();
-        double dz = hook.getZ() - owner.getZ();
-        double distance = Math.max(
-            2.0,
-            Math.min(
-                30.0,
-                Math.sqrt(dx * dx + dz * dz)
-            )
-        );
-        double bearing = Math.atan2(dz, dx);
+        double dx =
+            hook.getX() - owner.getX();
+
+        double dz =
+            hook.getZ() - owner.getZ();
+
+        double distance =
+            Math.max(
+                2.0,
+                Math.min(
+                    30.0,
+                    Math.sqrt(dx * dx + dz * dz)
+                )
+            );
+
+        double bearing =
+            Math.atan2(dz, dx);
+
         HookedFishKind kind =
             HookedFishKind.random(random);
 
-        FishingFight fight = new FishingFight(
-            kind.profile(),
-            LineProfile.PROTOTYPE,
-            BasicFishBehavior.INSTANCE,
-            new Random(random.nextLong()),
-            distance,
-            distance
-        );
+        FishingFight fight =
+            new FishingFight(
+                kind.profile(),
+                LineProfile.PROTOTYPE,
+                BasicFishBehavior.INSTANCE,
+                new Random(random.nextLong()),
+                distance,
+                distance
+            );
 
         return new HookedFish(
             kind,
             fight,
             hook.getY(),
             bearing,
-            random.nextDouble() * Math.PI * 2.0
+            random.nextDouble()
+                * Math.PI
+                * 2.0
         );
     }
 
-    public FightSnapshot tick(ReelAction action) {
+    public FightSnapshot tick(
+        ReelAction action
+    ) {
         FightSnapshot snapshot =
             fight.tick(action);
 
@@ -88,135 +101,85 @@ public final class HookedFish {
     private void updateWorldMotion(
         FightSnapshot snapshot
     ) {
-        double tick = snapshot.tick();
-        double intentTurn =
-            snapshot.fishIntent()
-                .lateralTurnRadians();
+        double targetAngle =
+            (
+                snapshot.fishTrackPosition()
+                    - 0.5
+            ) * 0.90;
 
-        boolean burst =
-            snapshot.fishIntent().burst();
-        boolean tired =
-            snapshot.phase() == FightPhase.TIRED;
+        double response =
+            snapshot.fishIntent().burst()
+                ? 0.34
+                : snapshot.phase() == FightPhase.TIRED
+                    ? 0.12
+                    : 0.22;
 
-        double weave = Math.sin(
-            tick * (
-                burst
-                    ? 0.34
-                    : tired
-                        ? 0.09
-                        : 0.17
-            ) + motionPhase
-        );
-
-        double targetAngularVelocity;
-        double response;
-
-        if (burst) {
-            targetAngularVelocity =
-                clamp(
-                    intentTurn * 2.7
-                        + weave * 0.045,
-                    -0.095,
-                    0.095
-                );
-            response = 0.34;
-        } else if (tired) {
-            targetAngularVelocity =
-                clamp(
-                    intentTurn * 0.65
-                        + weave * 0.006,
-                    -0.018,
-                    0.018
-                );
-            response = 0.11;
-        } else {
-            targetAngularVelocity =
-                clamp(
-                    intentTurn * 1.65
-                        + weave * 0.022,
-                    -0.052,
-                    0.052
-                );
-            response = 0.19;
-        }
-
-        angularVelocity +=
-            (targetAngularVelocity
-                - angularVelocity)
+        lateralAngle +=
+            (targetAngle - lateralAngle)
                 * response;
-
-        bearing += angularVelocity;
     }
 
     public Vec3 desiredPosition(
         Player owner,
         FightSnapshot snapshot
     ) {
-        double radius = Math.min(
-            MAX_VISUAL_RADIUS,
-            Math.max(
-                0.0,
-                snapshot.distance()
-            )
-        );
+        double radius =
+            Math.min(
+                MAX_VISUAL_RADIUS,
+                Math.max(
+                    0.0,
+                    snapshot.distance()
+                )
+            );
 
         boolean burst =
             snapshot.fishIntent().burst();
+
         boolean tired =
             snapshot.phase() == FightPhase.TIRED;
 
-        double tick = snapshot.tick();
-
-        double sweepAngle =
-            Math.sin(
-                tick
-                    * (
-                        burst
-                            ? 0.30
-                            : tired
-                                ? 0.08
-                                : 0.14
-                    )
-                    + motionPhase
-            )
-                * (
-                    burst
-                        ? 0.22
-                        : tired
-                            ? 0.045
-                            : 0.095
-                );
+        double tick =
+            snapshot.tick();
 
         double radialPulse =
             Math.sin(
                 tick
                     * (
                         burst
-                            ? 0.42
+                            ? 0.44
                             : tired
                                 ? 0.10
-                                : 0.18
+                                : 0.20
                     )
-                    + motionPhase * 0.73
+                    + motionPhase
             )
                 * (
                     burst
-                        ? 0.95
+                        ? 0.88
                         : tired
                             ? 0.10
-                            : 0.34
+                            : 0.24
                 );
 
-        double animatedRadius = Math.min(
-            MAX_VISUAL_RADIUS,
-            Math.max(
-                1.2,
-                radius + radialPulse
-            )
-        );
+        radialPulse +=
+            Math.abs(snapshot.fishVelocity())
+                * (
+                    burst
+                        ? 12.0
+                        : 6.0
+                );
+
+        double animatedRadius =
+            Math.min(
+                MAX_VISUAL_RADIUS,
+                Math.max(
+                    1.2,
+                    radius + radialPulse
+                )
+            );
 
         double animatedBearing =
-            bearing + sweepAngle;
+            baseBearing + lateralAngle;
 
         return new Vec3(
             owner.getX()
@@ -246,6 +209,7 @@ public final class HookedFish {
         }
 
         fish.setPersistenceRequired();
+
         fish.snapTo(
             hook.getX(),
             hook.getY(),
@@ -259,11 +223,11 @@ public final class HookedFish {
                 .add(0.0, 0.7, 0.0)
                 .subtract(hook.position());
 
-        double horizontal = Math.sqrt(
-            towardOwner.x * towardOwner.x
-                + towardOwner.z
-                    * towardOwner.z
-        );
+        double horizontal =
+            Math.sqrt(
+                towardOwner.x * towardOwner.x
+                    + towardOwner.z * towardOwner.z
+            );
 
         double yVelocity =
             0.34
@@ -279,20 +243,10 @@ public final class HookedFish {
         );
 
         level.addFreshEntity(fish);
+
         owner.awardStat(
             Stats.FISH_CAUGHT,
             1
-        );
-    }
-
-    private static double clamp(
-        double value,
-        double min,
-        double max
-    ) {
-        return Math.max(
-            min,
-            Math.min(max, value)
         );
     }
 }
