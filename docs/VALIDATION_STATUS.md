@@ -7,19 +7,37 @@
 - Shared loader-neutral fight engine.
 - Configurable fish and line profiles.
 - Pluggable per-fight fish behavior API.
-- Prototype burst behavior.
+- Vanilla bite-to-fight interception.
+- Server-authoritative reel input on Fabric and NeoForge.
+- Left-mouse reel-in and right-mouse pay-out input mapping.
 - Catch, escape and line-break terminal states.
+- Lightweight temporary `HookedFish` object.
+- Synced active-fight, fish-kind and line-tension state on the vanilla hook.
+- Successful conversion into a persistent live vanilla fish entity.
+- Vanilla fish land-flop behavior after the catch is launched out of the water.
 - Unit tests for basic line-state transitions.
 
-## Not yet validated
+## Build validation
 
-- Minecraft client launch on both loaders.
-- Fishing-rod input interception.
-- Vanilla fishing-hook integration.
-- Temporary hooked-fish entity/object.
-- Networking and server authority.
-- Fish/rod/line rendering and animation.
-- Conversion to a live fish entity.
+GitHub Actions compiles and packages both loader targets and runs the Fabric-hosted JUnit suite.
+
+## Runtime validation still required
+
+- Client launch on Fabric.
+- Client launch on NeoForge.
+- Dedicated-server connection on both loaders.
+- Bite interception and transition into a fight in a real world.
+- Continuous left/right mouse input under normal latency.
+- Hook movement around shorelines and small pools.
+- Live-fish launch trajectory and landing behavior.
+- Multiplayer ownership and disconnect edge cases.
 - In-game balance and feel.
 
-A successful compile/package run is not evidence that the in-game fishing loop is complete or balanced.
+## Presentation not implemented yet
+
+- Hooked-fish model during the fight.
+- Species-specific fight animation.
+- Rod bending.
+- Physical line sag/tension animation and sound feedback.
+
+A successful compile/package run is not evidence that the in-game loop or presentation is complete or balanced.

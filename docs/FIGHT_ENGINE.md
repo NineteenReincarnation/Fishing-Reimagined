@@ -1,31 +1,40 @@
 # Fight engine
 
-The prototype engine is deliberately small and loader-neutral.
+## Core model
 
-## Public model
+`FishingFight` owns one server-authoritative fight session. Each tick receives one `ReelAction`: `REEL_IN`, `PAY_OUT`, or `HOLD`.
 
-`FishingFight` owns one fight session. Each tick receives one `ReelAction`: `REEL_IN`, `PAY_OUT`, or `HOLD`.
+It exposes a `FightSnapshot` containing stamina, distance, line length, tension, failure pressure and the latest fish intent.
 
-It exposes a `FightSnapshot` for Minecraft-side adapters and presentation code.
+## Hooking flow
 
-## State
+Vanilla still handles casting, waiting and the bite window. Using the fishing rod during a valid bite starts a `HookedFish` session instead of immediately rolling the vanilla fishing loot table.
 
-The prototype tracks fish stamina, fish distance, current line length, line tension, consecutive slack exposure, consecutive overload exposure, the fight phase, and the latest fish movement intent.
+While the fight is active, vanilla retrieval is suppressed. The bite window is kept alive internally until the custom fight terminates.
 
-Stamina is an internal endurance model, not a damage/health system.
+## Temporary hooked fish
+
+`HookedFish` is intentionally not a normal mob. It combines:
+
+- one `FishingFight`
+- a selected fish kind
+- a lightweight bearing used for lateral movement
+- the original water height
+
+The vanilla hook acts as its synchronized world anchor for the prototype. The fish is autonomous through `FishBehavior`, while line length and tension constrain how far the fight can move.
+
+On `CAUGHT`, a normal vanilla fish entity is created at the water anchor and launched toward the player. Vanilla fish already have normal health, bucket interaction and land-flop behavior.
+
+## Failure
+
+- Sustained slack reaches `ESCAPED`.
+- Sustained overload reaches `LINE_BROKEN`.
+- Both outcomes end the fight without creating a fish.
 
 ## Extension points
 
-`FishBehavior` creates a per-fight `FishBehaviorSession`. A behavior session emits `FishIntent` values without knowing anything about Minecraft entities.
+`FishBehavior` creates a per-fight `FishBehaviorSession`. A session emits `FishIntent` values without loader knowledge.
 
-`FishIntent` already contains radial movement and lateral turning information. The first fight engine consumes the radial component; the spatial hooked-fish adapter can consume the lateral component later without replacing the behavior API.
+`FishIntent` contains radial movement, lateral turning, effort and burst state.
 
-`FishProfile` and `LineProfile` keep tuning values separate from the simulation.
-
-## Prototype behavior
-
-`BasicFishBehavior` provides steady movement with occasional bursts. It is a validation behavior, not a final species implementation.
-
-## Terminal outcomes
-
-The core exposes `CAUGHT`, `ESCAPED`, and `LINE_BROKEN`. The Minecraft bridge decides what each outcome does to the hook, temporary hooked-fish object and final live fish entity.
+`FishProfile` and `LineProfile` keep balance values outside the state machine so later species, sizes, rods and lines can use the same engine.

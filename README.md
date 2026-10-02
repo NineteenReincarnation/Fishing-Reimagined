@@ -7,10 +7,20 @@ Fishing Reimagined is a vanilla-oriented fishing rework for Minecraft Java Editi
 - Minecraft: **26.2**
 - Loaders: **Fabric + NeoForge**
 - Java: **25**
-- Mod version: **1.1.0+26.2**
+- Mod version: **1.1.1+26.2**
 - Development branch: **main**
 
-The project is currently in prototype development. The shared fight engine is implemented first; Minecraft hook/entity integration and presentation layers follow on top of that stable core.
+The current prototype connects the shared fight simulation to vanilla fishing on both supported loaders.
+
+## Controls
+
+After the vanilla bite, use the rod once to set the hook and enter the fight.
+
+- **Left mouse:** reel in
+- **Right mouse:** pay line out
+- **Neither / both:** hold
+
+The server owns the fight state. Excess slack can let the fish escape and sustained overload can break the line.
 
 ## Build
 
@@ -37,9 +47,9 @@ Artifacts are written to `fabric/build/libs/` and `neoforge/build/libs/`.
 
 ## Project layout
 
-- `common/` — loader-independent gameplay model and shared code
-- `fabric/` — Fabric bootstrap and packaging
-- `neoforge/` — NeoForge bootstrap and packaging
+- `common/` — shared gameplay model, Minecraft bridge, mixins and network payloads
+- `fabric/` — Fabric bootstrap, networking and packaging
+- `neoforge/` — NeoForge bootstrap, networking and packaging
 - `docs/` — architecture, fight-engine and versioning notes
 
 ## Documentation

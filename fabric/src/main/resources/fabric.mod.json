@@ -12,8 +12,12 @@
   "license": "MIT",
   "environment": "*",
   "entrypoints": {
-    "main": ["io.github.nineteenreincarnation.fishingreimagined.fabric.FishingReimaginedFabric"]
+    "main": ["io.github.nineteenreincarnation.fishingreimagined.fabric.FishingReimaginedFabric"],
+    "client": ["io.github.nineteenreincarnation.fishingreimagined.fabric.FishingReimaginedFabricClient"]
   },
+  "mixins": [
+    "fishing_reimagined.mixins.json"
+  ],
   "depends": {
     "fabricloader": ">=${fabric_loader_version}",
     "minecraft": "~${minecraft_version}",
