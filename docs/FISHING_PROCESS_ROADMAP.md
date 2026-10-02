@@ -204,3 +204,19 @@ Prepared in 1.1.13+26.2:
 - CI continues to build both loader artifacts on every main push
 
 F9 cannot be marked complete from CI alone. It remains open until the runtime matrix in PLAYTEST_PROTOCOL.md is executed.
+
+
+## F1.1 large-amplitude fish motion pass
+
+Implemented in 1.1.16+26.2 after video comparison against the reference presentation:
+
+- the server-side fish/hook anchor now sweeps across the water in broad arcs instead of mostly staying on one bearing
+- ordinary fighting gains visible lateral travel and radial pulsing
+- burst runs can move several blocks laterally at common casting distances
+- burst turning accelerates sharply and then eases back instead of only speeding up a tiny sine wave
+- tired fish motion contracts heavily
+- the client fish model adds a second layer of body-scale movement, stronger vertical travel and larger surge motion
+- species now scale visual motion differently: tropical fish is the most erratic, salmon is forceful, cod is baseline, and pufferfish is restrained
+- burst water effects were strengthened to match the larger world motion
+
+The important acceptance criterion is no longer merely "the fish animates." A normal fight should visibly travel across the water, while a burst should be readable from the fish alone even if the HUD is ignored.
