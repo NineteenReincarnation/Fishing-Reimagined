@@ -8,7 +8,10 @@ public interface FishingHookFightAccess {
 
     boolean fishingReimagined$isFishBiting();
 
-    boolean fishingReimagined$startFight(Player player, InteractionHand hand);
+    boolean fishingReimagined$startFight(
+        Player player,
+        InteractionHand hand
+    );
 
     float fishingReimagined$tensionRatio();
 
@@ -17,6 +20,14 @@ public interface FishingHookFightAccess {
     float fishingReimagined$staminaRatio();
 
     float fishingReimagined$breakRisk();
+
+    float fishingReimagined$fishVelocity();
+
+    float fishingReimagined$lineVelocity();
+
+    float fishingReimagined$dragSlip();
+
+    float fishingReimagined$distance();
 
     int fishingReimagined$fishState();
 

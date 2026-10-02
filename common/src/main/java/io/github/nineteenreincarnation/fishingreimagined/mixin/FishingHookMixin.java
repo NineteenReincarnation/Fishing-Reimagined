@@ -2,6 +2,7 @@ package io.github.nineteenreincarnation.fishingreimagined.mixin;
 
 import io.github.nineteenreincarnation.fishingreimagined.fight.FightPhase;
 import io.github.nineteenreincarnation.fishingreimagined.fight.FightSnapshot;
+import io.github.nineteenreincarnation.fishingreimagined.fight.FishFightMode;
 import io.github.nineteenreincarnation.fishingreimagined.fight.ReelAction;
 import io.github.nineteenreincarnation.fishingreimagined.fight.ServerFishingInput;
 import io.github.nineteenreincarnation.fishingreimagined.hook.FishingHookFightAccess;
@@ -74,6 +75,38 @@ public abstract class FishingHookMixin
             );
 
     @Unique
+    private static final EntityDataAccessor<Float>
+        FISHING_REIMAGINED_FISH_VELOCITY =
+            SynchedEntityData.defineId(
+                FishingHook.class,
+                EntityDataSerializers.FLOAT
+            );
+
+    @Unique
+    private static final EntityDataAccessor<Float>
+        FISHING_REIMAGINED_LINE_VELOCITY =
+            SynchedEntityData.defineId(
+                FishingHook.class,
+                EntityDataSerializers.FLOAT
+            );
+
+    @Unique
+    private static final EntityDataAccessor<Float>
+        FISHING_REIMAGINED_DRAG_SLIP =
+            SynchedEntityData.defineId(
+                FishingHook.class,
+                EntityDataSerializers.FLOAT
+            );
+
+    @Unique
+    private static final EntityDataAccessor<Float>
+        FISHING_REIMAGINED_DISTANCE =
+            SynchedEntityData.defineId(
+                FishingHook.class,
+                EntityDataSerializers.FLOAT
+            );
+
+    @Unique
     private static final EntityDataAccessor<Integer>
         FISHING_REIMAGINED_FISH_STATE =
             SynchedEntityData.defineId(
@@ -124,6 +157,10 @@ public abstract class FishingHookMixin
         builder.define(FISHING_REIMAGINED_PROGRESS, 0.0F);
         builder.define(FISHING_REIMAGINED_STAMINA, 1.0F);
         builder.define(FISHING_REIMAGINED_BREAK_RISK, 0.0F);
+        builder.define(FISHING_REIMAGINED_FISH_VELOCITY, 0.0F);
+        builder.define(FISHING_REIMAGINED_LINE_VELOCITY, 0.0F);
+        builder.define(FISHING_REIMAGINED_DRAG_SLIP, 0.0F);
+        builder.define(FISHING_REIMAGINED_DISTANCE, 0.0F);
         builder.define(FISHING_REIMAGINED_FISH_STATE, 0);
         builder.define(FISHING_REIMAGINED_FISH_KIND, 0);
     }
@@ -168,6 +205,22 @@ public abstract class FishingHookMixin
         hook.getEntityData().set(
             FISHING_REIMAGINED_BREAK_RISK,
             (float) snapshot.breakRisk()
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_FISH_VELOCITY,
+            (float) snapshot.fishVelocity()
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_LINE_VELOCITY,
+            (float) snapshot.lineVelocity()
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_DRAG_SLIP,
+            (float) snapshot.dragSlip()
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_DISTANCE,
+            (float) snapshot.distance()
         );
         hook.getEntityData().set(
             FISHING_REIMAGINED_FISH_STATE,
@@ -310,6 +363,23 @@ public abstract class FishingHookMixin
             0.0F
         );
         hook.getEntityData().set(
+            FISHING_REIMAGINED_FISH_VELOCITY,
+            0.0F
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_LINE_VELOCITY,
+            0.0F
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_DRAG_SLIP,
+            0.0F
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_DISTANCE,
+            (float) hook.position()
+                .distanceTo(player.position())
+        );
+        hook.getEntityData().set(
             FISHING_REIMAGINED_FISH_STATE,
             0
         );
@@ -349,6 +419,38 @@ public abstract class FishingHookMixin
     }
 
     @Override
+    public float fishingReimagined$fishVelocity() {
+        FishingHook hook = (FishingHook) (Object) this;
+        return hook.getEntityData().get(
+            FISHING_REIMAGINED_FISH_VELOCITY
+        );
+    }
+
+    @Override
+    public float fishingReimagined$lineVelocity() {
+        FishingHook hook = (FishingHook) (Object) this;
+        return hook.getEntityData().get(
+            FISHING_REIMAGINED_LINE_VELOCITY
+        );
+    }
+
+    @Override
+    public float fishingReimagined$dragSlip() {
+        FishingHook hook = (FishingHook) (Object) this;
+        return hook.getEntityData().get(
+            FISHING_REIMAGINED_DRAG_SLIP
+        );
+    }
+
+    @Override
+    public float fishingReimagined$distance() {
+        FishingHook hook = (FishingHook) (Object) this;
+        return hook.getEntityData().get(
+            FISHING_REIMAGINED_DISTANCE
+        );
+    }
+
+    @Override
     public int fishingReimagined$fishState() {
         FishingHook hook = (FishingHook) (Object) this;
         return hook.getEntityData().get(
@@ -374,7 +476,17 @@ public abstract class FishingHookMixin
         if (snapshot.phase() == FightPhase.TIRED) {
             return 2;
         }
-        return snapshot.fishIntent().burst() ? 1 : 0;
+
+        FishFightMode mode =
+            snapshot.fishIntent().mode();
+
+        return switch (mode) {
+            case BURST -> 1;
+            case TIRED -> 2;
+            case PULLING -> 4;
+            case RECOVERING -> 5;
+            case PROBING -> 0;
+        };
     }
 
     @Unique
@@ -549,6 +661,22 @@ public abstract class FishingHookMixin
         );
         hook.getEntityData().set(
             FISHING_REIMAGINED_BREAK_RISK,
+            0.0F
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_FISH_VELOCITY,
+            0.0F
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_LINE_VELOCITY,
+            0.0F
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_DRAG_SLIP,
+            0.0F
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_DISTANCE,
             0.0F
         );
         hook.getEntityData().set(
