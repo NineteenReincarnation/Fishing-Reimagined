@@ -311,6 +311,28 @@ public final class ClientHookedFishVisuals {
                 pitchAmplitude = 3.0F;
                 trailFactor = 0.15;
             }
+            case 4 -> {
+                sideAmplitude =
+                    0.88 * speciesScale;
+                sideSpeed = 0.72;
+                baseDepth = -0.52;
+                verticalAmplitude =
+                    0.16 * speciesScale;
+                radialOffset =
+                    0.56 * speciesScale;
+                pitchAmplitude = 17.0F;
+                trailFactor = 1.10;
+            }
+            case 5 -> {
+                sideAmplitude =
+                    0.30 * speciesScale;
+                sideSpeed = 0.28;
+                baseDepth = -0.82;
+                verticalAmplitude = 0.05;
+                radialOffset = 0.16;
+                pitchAmplitude = 5.0F;
+                trailFactor = 0.30;
+            }
             default -> {
                 sideAmplitude =
                     0.58 * speciesScale;
@@ -324,6 +346,15 @@ public final class ClientHookedFishVisuals {
                 trailFactor = 0.55;
             }
         }
+
+        double physicalOutwardSpeed =
+            Mth.clamp(
+                access
+                    .fishingReimagined$fishVelocity()
+                    / 0.14F,
+                -1.0F,
+                1.0F
+            );
 
         double landingProgress =
             Mth.clamp(
@@ -351,14 +382,30 @@ public final class ClientHookedFishVisuals {
             )
                 * verticalAmplitude;
 
-        double surge =
+        double stateSurge =
             state == 1
-                ? Math.sin(
-                    time * 0.63
-                )
-                    * 0.42
-                    * speciesScale
-                : 0.0;
+                ? 0.42
+                : state == 4
+                    ? 0.20
+                    : 0.0;
+
+        double surge =
+            Math.sin(
+                time
+                    * (
+                        state == 1
+                            ? 0.63
+                            : 0.44
+                    )
+            )
+                * stateSurge
+                * speciesScale
+                + physicalOutwardSpeed
+                    * (
+                        state == 1
+                            ? 0.46
+                            : 0.22
+                    );
 
         Vec3 target =
             hook.position()
@@ -556,8 +603,10 @@ public final class ClientHookedFishVisuals {
         }
 
         if (
-            state == 0
-                && hook.tickCount % 6 == 0
+            (state == 0 || state == 4)
+                && hook.tickCount
+                    % (state == 4 ? 4 : 6)
+                    == 0
         ) {
             level.addParticle(
                 ParticleTypes.BUBBLE,
