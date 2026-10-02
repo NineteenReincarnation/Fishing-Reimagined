@@ -60,14 +60,14 @@ public final class ClientSpecialFishingMode {
 
             sync();
 
-            minecraft.player
-                .displayClientMessage(
+            minecraft.gui.hud
+                .setOverlayMessage(
                     Component.translatable(
                         enabled
                             ? "message.fishing_reimagined.mode_enabled"
                             : "message.fishing_reimagined.mode_disabled"
                     ),
-                    true
+                    false
                 );
         }
     }
