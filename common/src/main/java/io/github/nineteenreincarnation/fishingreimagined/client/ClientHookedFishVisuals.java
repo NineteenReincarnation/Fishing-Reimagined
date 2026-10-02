@@ -146,33 +146,45 @@ public final class ClientHookedFishVisuals {
         double time = hook.tickCount + hook.getId() * 0.37;
         double sideAmplitude;
         double sideSpeed;
-        double depth;
+        double baseDepth;
         double verticalAmplitude;
+        double radialOffset;
         float pitchAmplitude;
 
         switch (state) {
             case 1 -> {
-                sideAmplitude = 0.46;
-                sideSpeed = 0.92;
-                depth = -0.55;
-                verticalAmplitude = 0.12;
-                pitchAmplitude = 14.0F;
+                sideAmplitude = 0.70;
+                sideSpeed = 1.05;
+                baseDepth = -0.48;
+                verticalAmplitude = 0.16;
+                radialOffset = 0.34;
+                pitchAmplitude = 18.0F;
             }
             case 2 -> {
-                sideAmplitude = 0.10;
-                sideSpeed = 0.20;
-                depth = -0.92;
-                verticalAmplitude = 0.025;
-                pitchAmplitude = 3.0F;
+                sideAmplitude = 0.12;
+                sideSpeed = 0.18;
+                baseDepth = -0.90;
+                verticalAmplitude = 0.02;
+                radialOffset = 0.10;
+                pitchAmplitude = 2.5F;
             }
             default -> {
-                sideAmplitude = 0.23;
-                sideSpeed = 0.42;
-                depth = -0.76;
-                verticalAmplitude = 0.055;
-                pitchAmplitude = 7.0F;
+                sideAmplitude = 0.30;
+                sideSpeed = 0.46;
+                baseDepth = -0.72;
+                verticalAmplitude = 0.07;
+                radialOffset = 0.18;
+                pitchAmplitude = 8.0F;
             }
         }
+
+        double landingProgress = Mth.clamp(
+            access.fishingReimagined$catchProgress(),
+            0.0F,
+            1.0F
+        );
+        double depth =
+            baseDepth + landingProgress * 0.22;
 
         double sideOffset =
             Math.sin(time * sideSpeed) * sideAmplitude;
@@ -181,6 +193,7 @@ public final class ClientHookedFishVisuals {
                 * verticalAmplitude;
 
         Vec3 target = hook.position()
+            .add(horizontal.scale(radialOffset))
             .add(lateral.scale(sideOffset))
             .add(0.0, depth + verticalOffset, 0.0);
 
@@ -215,14 +228,61 @@ public final class ClientHookedFishVisuals {
         );
         visual.lastPosition = target;
 
+        if (visual.lastState != state) {
+            emitStateTransitionParticles(
+                level,
+                hook,
+                target,
+                state
+            );
+            visual.lastState = state;
+        }
+
         emitStateParticles(
             level,
             hook,
             target,
             state,
             lateral,
+            movement,
             time
         );
+    }
+
+    private static void emitStateTransitionParticles(
+        ClientLevel level,
+        FishingHook hook,
+        Vec3 position,
+        int state
+    ) {
+        if (state != 1) {
+            return;
+        }
+
+        for (int i = 0; i < 5; i++) {
+            double spread = (i - 2) * 0.055;
+            level.addParticle(
+                ParticleTypes.SPLASH,
+                position.x + spread,
+                hook.getY() + 0.10,
+                position.z - spread,
+                spread * 0.10,
+                0.06 + Math.abs(spread) * 0.15,
+                -spread * 0.10
+            );
+        }
+
+        for (int i = 0; i < 6; i++) {
+            level.addParticle(
+                ParticleTypes.BUBBLE,
+                position.x,
+                position.y + 0.12,
+                position.z,
+                (i - 2.5) * 0.01,
+                0.03,
+                (2.5 - i) * 0.01
+            );
+        }
     }
 
     private static void emitStateParticles(
@@ -231,6 +291,7 @@ public final class ClientHookedFishVisuals {
         Vec3 position,
         int state,
         Vec3 lateral,
+        Vec3 movement,
         double time
     ) {
         if (state == 1) {
@@ -239,9 +300,9 @@ public final class ClientHookedFishVisuals {
                     Math.sin(time * 0.8) * 0.05;
                 level.addParticle(
                     ParticleTypes.BUBBLE,
-                    position.x,
+                    position.x - movement.x * 1.5,
                     position.y + 0.10,
-                    position.z,
+                    position.z - movement.z * 1.5,
                     lateral.x * drift,
                     0.025,
                     lateral.z * drift
@@ -251,9 +312,9 @@ public final class ClientHookedFishVisuals {
             if (hook.tickCount % 5 == 0) {
                 level.addParticle(
                     ParticleTypes.SPLASH,
-                    hook.getX(),
+                    position.x,
                     hook.getY() + 0.08,
-                    hook.getZ(),
+                    position.z,
                     0.0,
                     0.04,
                     0.0
@@ -301,6 +362,7 @@ public final class ClientHookedFishVisuals {
         private final HookedFishKind kind;
         private final AbstractFish fish;
         private Vec3 lastPosition;
+        private int lastState = -1;
 
         private VisualFish(
             HookedFishKind kind,
