@@ -136,13 +136,13 @@ public final class ClientFishingAudio {
     }
 
     private static int tensionBand(float tension) {
-        if (tension < 0.08F) {
+        if (tension < 0.18F) {
             return 0;
         }
-        if (tension < 0.72F) {
+        if (tension < 0.70F) {
             return 1;
         }
-        if (tension <= 1.0F) {
+        if (tension < 0.95F) {
             return 2;
         }
         return 3;
