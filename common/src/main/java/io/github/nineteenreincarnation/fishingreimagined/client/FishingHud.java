@@ -1,6 +1,5 @@
 package io.github.nineteenreincarnation.fishingreimagined.client;
 
-import io.github.nineteenreincarnation.fishingreimagined.fight.ReelAction;
 import io.github.nineteenreincarnation.fishingreimagined.hook.FishingHookFightAccess;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -10,15 +9,11 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.projectile.FishingHook;
 
 public final class FishingHud {
-    private static final int PANEL_WIDTH = 222;
-    private static final int PANEL_HEIGHT = 62;
-    private static final int BAR_WIDTH = 194;
-    private static final int BAR_HEIGHT = 7;
-
-    private static final float LOW_END = 0.28F;
-    private static final float IDEAL_END = 0.68F;
-    private static final float RED_START = 0.90F;
-    private static final float DISPLAY_MAX = 1.20F;
+    private static final int PANEL_WIDTH = 252;
+    private static final int PANEL_HEIGHT = 61;
+    private static final int TRACK_WIDTH = 224;
+    private static final int TRACK_HEIGHT = 15;
+    private static final int PROGRESS_HEIGHT = 6;
 
     private FishingHud() {
     }
@@ -31,18 +26,33 @@ public final class FishingHud {
             return;
         }
 
-        FishingHook hook = minecraft.player.fishing;
+        FishingHook hook =
+            minecraft.player.fishing;
 
-        if (!(hook instanceof FishingHookFightAccess access)
+        if (!(hook
+            instanceof FishingHookFightAccess access)
             || !access.fishingReimagined$isFightActive()) {
             return;
         }
 
         Font font = minecraft.font;
 
-        float tension = Math.max(
+        float fishPosition = Mth.clamp(
+            access.fishingReimagined$fishTrackPosition(),
             0.0F,
-            access.fishingReimagined$tensionRatio()
+            1.0F
+        );
+
+        float zonePosition = Mth.clamp(
+            access.fishingReimagined$catchZonePosition(),
+            0.0F,
+            1.0F
+        );
+
+        float zoneWidth = Mth.clamp(
+            access.fishingReimagined$catchZoneWidth(),
+            0.05F,
+            0.80F
         );
 
         float progress = Mth.clamp(
@@ -51,16 +61,11 @@ public final class FishingHud {
             1.0F
         );
 
-        float breakRisk = Mth.clamp(
-            access.fishingReimagined$breakRisk(),
-            0.0F,
-            1.0F
-        );
-
         int centerX = graphics.guiWidth() / 2;
         int panelX = centerX - PANEL_WIDTH / 2;
         int panelY = graphics.guiHeight() - 108;
-        int contentX = panelX + 14;
+        int trackX = panelX + 14;
+        int trackY = panelY + 22;
 
         graphics.nextStratum();
 
@@ -70,47 +75,40 @@ public final class FishingHud {
             panelY
         );
 
-        ReelAction action =
-            ClientFishingInput.currentAction();
-
-        Component tensionLabel =
+        Component label =
             Component.translatable(
-                "hud.fishing_reimagined.tension_label"
+                "hud.fishing_reimagined.track_label"
             );
 
-        Component actionLabel =
-            action == ReelAction.REEL_IN
-                ? Component.translatable(
-                    "hud.fishing_reimagined.reeling"
-                )
-                : Component.translatable(
-                    "hud.fishing_reimagined.release"
-                );
+        Component hint =
+            Component.translatable(
+                "hud.fishing_reimagined.track_hint"
+            );
 
         graphics.text(
             font,
-            tensionLabel,
-            contentX,
+            label,
+            trackX,
             panelY + 8,
-            0xFFF3F3F3
+            0xFFF2F2F2
         );
 
         graphics.text(
             font,
-            actionLabel,
+            hint,
             panelX + PANEL_WIDTH - 14
-                - font.width(actionLabel),
+                - font.width(hint),
             panelY + 8,
-            action == ReelAction.REEL_IN
-                ? 0xFFA8E8A8
-                : 0xFFB7D5F3
+            0xFFB9CDE0
         );
 
-        drawTensionBar(
+        drawCatchTrack(
             graphics,
-            contentX,
-            panelY + 21,
-            tension
+            trackX,
+            trackY,
+            fishPosition,
+            zonePosition,
+            zoneWidth
         );
 
         Component progressLabel =
@@ -118,42 +116,34 @@ public final class FishingHud {
                 "hud.fishing_reimagined.progress_label"
             );
 
-        String progressPercent =
-            Math.round(progress * 100.0F)
+        String percentage =
+            Math.round(
+                progress * 100.0F
+            )
                 + "%";
 
         graphics.text(
             font,
             progressLabel,
-            contentX,
-            panelY + 35,
-            0xFFF3F3F3
+            trackX,
+            panelY + 43,
+            0xFFF2F2F2
         );
 
         graphics.text(
             font,
-            progressPercent,
+            percentage,
             panelX + PANEL_WIDTH - 14
-                - font.width(progressPercent),
-            panelY + 35,
+                - font.width(percentage),
+            panelY + 43,
             0xFF8FD5FF
         );
 
-        drawProgressBar(
+        drawProgress(
             graphics,
-            contentX,
-            panelY + 48,
+            trackX,
+            panelY + 54,
             progress
-        );
-
-        drawDangerBanner(
-            graphics,
-            font,
-            minecraft,
-            centerX,
-            panelY,
-            tension,
-            breakRisk
         );
     }
 
@@ -167,7 +157,7 @@ public final class FishingHud {
             y + 2,
             x + PANEL_WIDTH + 2,
             y + PANEL_HEIGHT + 2,
-            0x65000000
+            0x60000000
         );
 
         graphics.fill(
@@ -175,7 +165,7 @@ public final class FishingHud {
             y,
             x + PANEL_WIDTH,
             y + PANEL_HEIGHT,
-            0xB9181818
+            0xB616181A
         );
 
         graphics.fill(
@@ -183,7 +173,7 @@ public final class FishingHud {
             y,
             x + PANEL_WIDTH,
             y + 1,
-            0xA0FFFFFF
+            0x80FFFFFF
         );
 
         graphics.fill(
@@ -195,217 +185,178 @@ public final class FishingHud {
         );
     }
 
-    private static void drawTensionBar(
+    private static void drawCatchTrack(
         GuiGraphicsExtractor graphics,
         int x,
         int y,
-        float tension
-    ) {
-        drawBarFrame(
-            graphics,
-            x,
-            y
-        );
-
-        int innerX = x + 1;
-        int innerY = y + 1;
-        int innerWidth = BAR_WIDTH - 2;
-        int innerHeight = BAR_HEIGHT - 2;
-
-        int lowEnd =
-            innerX + Math.round(
-                innerWidth
-                    * (LOW_END / DISPLAY_MAX)
-            );
-
-        int idealEnd =
-            innerX + Math.round(
-                innerWidth
-                    * (IDEAL_END / DISPLAY_MAX)
-            );
-
-        int redStart =
-            innerX + Math.round(
-                innerWidth
-                    * (RED_START / DISPLAY_MAX)
-            );
-
-        graphics.fill(
-            innerX,
-            innerY,
-            lowEnd,
-            innerY + innerHeight,
-            0xFF26323B
-        );
-
-        graphics.fill(
-            lowEnd,
-            innerY,
-            idealEnd,
-            innerY + innerHeight,
-            0xFF1C4A28
-        );
-
-        graphics.fill(
-            idealEnd,
-            innerY,
-            redStart,
-            innerY + innerHeight,
-            0xFF5A461B
-        );
-
-        graphics.fill(
-            redStart,
-            innerY,
-            innerX + innerWidth,
-            innerY + innerHeight,
-            0xFF5A1B1B
-        );
-
-        float normalized =
-            Mth.clamp(
-                tension / DISPLAY_MAX,
-                0.0F,
-                1.0F
-            );
-
-        int marker =
-            innerX + Math.round(
-                normalized
-                    * (innerWidth - 1)
-            );
-
-        graphics.fill(
-            marker - 1,
-            y - 2,
-            marker + 2,
-            y + BAR_HEIGHT + 2,
-            0xFFFFFFFF
-        );
-    }
-
-    private static void drawProgressBar(
-        GuiGraphicsExtractor graphics,
-        int x,
-        int y,
-        float progress
-    ) {
-        drawBarFrame(
-            graphics,
-            x,
-            y
-        );
-
-        int innerX = x + 1;
-        int innerY = y + 1;
-        int innerWidth = BAR_WIDTH - 2;
-        int innerHeight = BAR_HEIGHT - 2;
-
-        graphics.fill(
-            innerX,
-            innerY,
-            innerX + innerWidth,
-            innerY + innerHeight,
-            0xFF172832
-        );
-
-        int filled =
-            Math.round(
-                innerWidth * progress
-            );
-
-        if (filled > 0) {
-            graphics.fill(
-                innerX,
-                innerY,
-                innerX + filled,
-                innerY + innerHeight,
-                0xFF4AB6F0
-            );
-
-            if (filled > 2) {
-                graphics.fill(
-                    innerX,
-                    innerY,
-                    innerX + filled,
-                    innerY + 1,
-                    0xFF90D8FF
-                );
-            }
-        }
-    }
-
-    private static void drawBarFrame(
-        GuiGraphicsExtractor graphics,
-        int x,
-        int y
+        float fishPosition,
+        float zonePosition,
+        float zoneWidth
     ) {
         graphics.fill(
             x - 1,
             y - 1,
-            x + BAR_WIDTH + 1,
-            y + BAR_HEIGHT + 1,
+            x + TRACK_WIDTH + 1,
+            y + TRACK_HEIGHT + 1,
             0xD0000000
         );
 
         graphics.fill(
             x,
             y,
-            x + BAR_WIDTH,
-            y + BAR_HEIGHT,
-            0xFF232323
+            x + TRACK_WIDTH,
+            y + TRACK_HEIGHT,
+            0xFF20262B
+        );
+
+        for (int i = 1; i < 4; i++) {
+            int tickX =
+                x + TRACK_WIDTH * i / 4;
+
+            graphics.fill(
+                tickX,
+                y + 2,
+                tickX + 1,
+                y + TRACK_HEIGHT - 2,
+                0xFF30383E
+            );
+        }
+
+        int zoneCenter =
+            x + Math.round(
+                zonePosition * TRACK_WIDTH
+            );
+
+        int halfZone =
+            Math.max(
+                8,
+                Math.round(
+                    zoneWidth
+                        * TRACK_WIDTH
+                        * 0.5F
+                )
+            );
+
+        int zoneLeft =
+            Mth.clamp(
+                zoneCenter - halfZone,
+                x,
+                x + TRACK_WIDTH
+            );
+
+        int zoneRight =
+            Mth.clamp(
+                zoneCenter + halfZone,
+                x,
+                x + TRACK_WIDTH
+            );
+
+        graphics.fill(
+            zoneLeft,
+            y + 1,
+            zoneRight,
+            y + TRACK_HEIGHT - 1,
+            0xAA2F7C4A
+        );
+
+        graphics.fill(
+            zoneLeft,
+            y,
+            zoneLeft + 1,
+            y + TRACK_HEIGHT,
+            0xFF69D889
+        );
+
+        graphics.fill(
+            zoneRight - 1,
+            y,
+            zoneRight,
+            y + TRACK_HEIGHT,
+            0xFF69D889
+        );
+
+        int fishX =
+            x + Math.round(
+                fishPosition * TRACK_WIDTH
+            );
+
+        boolean inside =
+            fishX >= zoneLeft
+                && fishX <= zoneRight;
+
+        int fishColor =
+            inside
+                ? 0xFFFFE28A
+                : 0xFFFFA85A;
+
+        graphics.fill(
+            fishX - 2,
+            y + 3,
+            fishX + 3,
+            y + TRACK_HEIGHT - 3,
+            fishColor
+        );
+
+        graphics.fill(
+            fishX - 4,
+            y + 6,
+            fishX + 5,
+            y + TRACK_HEIGHT - 6,
+            fishColor
+        );
+
+        graphics.fill(
+            fishX - 1,
+            y + 1,
+            fishX + 2,
+            y + 3,
+            0xFFFFFFFF
         );
     }
 
-    private static void drawDangerBanner(
+    private static void drawProgress(
         GuiGraphicsExtractor graphics,
-        Font font,
-        Minecraft minecraft,
-        int centerX,
-        int panelY,
-        float tension,
-        float breakRisk
+        int x,
+        int y,
+        float progress
     ) {
-        if (tension < RED_START
-            && breakRisk <= 0.0F) {
-            return;
-        }
-
-        Component banner =
-            Component.translatable(
-                "hud.fishing_reimagined.snap_warning"
-            );
-
-        int width =
-            font.width(banner);
-
-        int x =
-            centerX - width / 2;
-
-        int y =
-            panelY - 15;
-
-        int pulse =
-            (minecraft.player.tickCount / 3)
-                    % 2
-                    == 0
-                ? 0xFFFF6666
-                : 0xFFFFFFFF;
+        graphics.fill(
+            x - 1,
+            y - 1,
+            x + TRACK_WIDTH + 1,
+            y + PROGRESS_HEIGHT + 1,
+            0xD0000000
+        );
 
         graphics.fill(
-            x - 6,
-            y - 2,
-            x + width + 6,
-            y + 10,
-            0xB0501717
-        );
-
-        graphics.text(
-            font,
-            banner,
             x,
             y,
-            pulse
+            x + TRACK_WIDTH,
+            y + PROGRESS_HEIGHT,
+            0xFF172832
         );
+
+        int filled =
+            Math.round(
+                TRACK_WIDTH * progress
+            );
+
+        if (filled > 0) {
+            graphics.fill(
+                x,
+                y,
+                x + filled,
+                y + PROGRESS_HEIGHT,
+                0xFF4AB6F0
+            );
+
+            graphics.fill(
+                x,
+                y,
+                x + filled,
+                y + 1,
+                0xFF91D9FF
+            );
+        }
     }
 }

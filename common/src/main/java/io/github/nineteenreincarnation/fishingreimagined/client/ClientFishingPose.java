@@ -14,11 +14,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
 public final class ClientFishingPose {
-    private static float smoothedTension;
     private static float smoothedProgress;
     private static float smoothedFishVelocity;
-    private static float smoothedLineVelocity;
-    private static float smoothedDragSlip;
+    private static float smoothedZoneVelocity;
+    private static float smoothedMiss;
 
     private static ReelAction action =
         ReelAction.HOLD;
@@ -51,18 +50,6 @@ public final class ClientFishingPose {
         action =
             ClientFishingInput.currentAction();
 
-        smoothedTension =
-            Mth.lerp(
-                0.30F,
-                smoothedTension,
-                Mth.clamp(
-                    access
-                        .fishingReimagined$tensionRatio(),
-                    0.0F,
-                    1.35F
-                )
-            );
-
         smoothedProgress =
             Mth.lerp(
                 0.18F,
@@ -77,26 +64,44 @@ public final class ClientFishingPose {
 
         smoothedFishVelocity =
             Mth.lerp(
-                0.34F,
+                0.32F,
                 smoothedFishVelocity,
                 access
                     .fishingReimagined$fishVelocity()
             );
 
-        smoothedLineVelocity =
+        smoothedZoneVelocity =
             Mth.lerp(
-                0.34F,
-                smoothedLineVelocity,
+                0.30F,
+                smoothedZoneVelocity,
                 access
                     .fishingReimagined$lineVelocity()
             );
 
-        smoothedDragSlip =
-            Mth.lerp(
-                0.40F,
-                smoothedDragSlip,
+        float separation =
+            Math.abs(
                 access
-                    .fishingReimagined$dragSlip()
+                    .fishingReimagined$fishTrackPosition()
+                    - access
+                        .fishingReimagined$catchZonePosition()
+            );
+
+        float halfWidth =
+            access
+                .fishingReimagined$catchZoneWidth()
+                * 0.5F;
+
+        float miss =
+            Math.max(
+                0.0F,
+                separation - halfWidth
+            );
+
+        smoothedMiss =
+            Mth.lerp(
+                0.25F,
+                smoothedMiss,
+                miss
             );
     }
 
@@ -128,48 +133,33 @@ public final class ClientFishingPose {
                 ? 1.0F
                 : -1.0F;
 
-        float tension =
+        float fishEnergy =
             Mth.clamp(
-                smoothedTension,
+                Math.abs(smoothedFishVelocity)
+                    / 0.040F,
                 0.0F,
-                1.25F
+                1.0F
+            );
+
+        float missLoad =
+            Mth.clamp(
+                smoothedMiss / 0.22F,
+                0.0F,
+                1.0F
+            );
+
+        float zoneMotion =
+            Mth.clamp(
+                Math.abs(smoothedZoneVelocity)
+                    / 0.045F,
+                0.0F,
+                1.0F
             );
 
         float load =
             Mth.clamp(
-                tension / 0.88F,
-                0.0F,
-                1.0F
-            );
-
-        float critical =
-            Mth.clamp(
-                (tension - 0.82F)
-                    / 0.34F,
-                0.0F,
-                1.0F
-            );
-
-        float outwardPull =
-            Mth.clamp(
-                smoothedFishVelocity
-                    / 0.11F,
-                0.0F,
-                1.0F
-            );
-
-        float actualReel =
-            Mth.clamp(
-                -smoothedLineVelocity
-                    / 0.11F,
-                0.0F,
-                1.0F
-            );
-
-        float drag =
-            Mth.clamp(
-                smoothedDragSlip
-                    / 0.16F,
+                fishEnergy * 0.65F
+                    + missLoad * 0.35F,
                 0.0F,
                 1.0F
             );
@@ -177,38 +167,34 @@ public final class ClientFishingPose {
         float phase =
             player.tickCount
                 * (
-                    0.58F
-                        + actualReel * 0.72F
+                    0.70F
+                        + zoneMotion * 0.65F
                 );
 
-        float pump =
-            action == ReelAction.REEL_IN
-                ? Mth.sin(phase)
-                    * actualReel
-                : 0.0F;
+        float controlPulse =
+            Mth.sin(phase)
+                * zoneMotion;
 
-        float pullBack =
-            load * 0.085F
-                + outwardPull * 0.035F;
+        float direction =
+            smoothedZoneVelocity >= 0.0F
+                ? 1.0F
+                : -1.0F;
 
         poseStack.translate(
             handSign
-                * (
-                    -0.032F * load
-                        + pump * 0.010F
-                ),
-            -0.045F * load
-                + pump * 0.015F,
-            pullBack
-                - drag * 0.035F
+                * controlPulse
+                * 0.010F,
+            -load * 0.026F
+                + controlPulse * 0.008F,
+            load * 0.060F
         );
 
         poseStack.mulPose(
             Axis.XP.rotationDegrees(
-                -13.0F * load
-                    - 5.0F
-                        * outwardPull
-                    + 6.0F * drag
+                -8.0F * load
+                    + direction
+                        * controlPulse
+                        * 2.5F
             )
         );
 
@@ -216,66 +202,38 @@ public final class ClientFishingPose {
             Axis.ZP.rotationDegrees(
                 handSign
                     * (
-                        -5.5F * load
-                            + pump * 14.0F
+                        -3.0F * load
+                            + controlPulse
+                                * 9.0F
                     )
             )
         );
 
-        if (drag > 0.02F) {
-            float ratchet =
-                Mth.sin(
-                    player.tickCount
-                        * (
-                            2.2F
-                                + drag * 2.8F
-                        )
-                )
-                    * drag;
-
-            poseStack.translate(
-                handSign
-                    * ratchet
-                    * 0.006F,
-                ratchet * 0.004F,
-                -ratchet * 0.004F
-            );
-
-            poseStack.mulPose(
-                Axis.YP.rotationDegrees(
-                    handSign
-                        * ratchet
-                        * 2.4F
-                )
-            );
-        }
-
-        if (critical > 0.0F) {
+        if (fishEnergy > 0.65F) {
             float tremor =
                 Mth.sin(
                     player.tickCount
-                        * 3.15F
+                        * 2.8F
                 )
-                    * critical;
+                    * (
+                        fishEnergy
+                            - 0.65F
+                    );
 
             poseStack.translate(
                 handSign
                     * tremor
-                    * 0.006F,
-                tremor * 0.005F,
+                    * 0.004F,
+                tremor * 0.003F,
                 0.0F
             );
         }
 
         poseStack.translate(
             0.0F,
-            smoothedProgress * 0.014F,
+            smoothedProgress * 0.012F,
             0.0F
         );
-    }
-
-    public static float tension() {
-        return smoothedTension;
     }
 
     public static ReelAction action() {
@@ -289,13 +247,6 @@ public final class ClientFishingPose {
     private static void reset() {
         active = false;
         action = ReelAction.HOLD;
-
-        smoothedTension =
-            Mth.lerp(
-                0.35F,
-                smoothedTension,
-                0.0F
-            );
 
         smoothedProgress =
             Mth.lerp(
@@ -311,17 +262,17 @@ public final class ClientFishingPose {
                 0.0F
             );
 
-        smoothedLineVelocity =
+        smoothedZoneVelocity =
             Mth.lerp(
                 0.35F,
-                smoothedLineVelocity,
+                smoothedZoneVelocity,
                 0.0F
             );
 
-        smoothedDragSlip =
+        smoothedMiss =
             Mth.lerp(
                 0.35F,
-                smoothedDragSlip,
+                smoothedMiss,
                 0.0F
             );
     }
