@@ -22,7 +22,7 @@ The reference bar is the clarity of Better Fishing plus the physical readability
 | F0 | Fight feedback logic | Make correct play visibly produce progress | Separate landing progress from raw distance; progress-linked inward pull; burst/fatigue modifiers | Controlled green-zone reeling advances progress and visibly brings fish closer; slack loses progress; overload remains dangerous | Done |
 | F1 | Hooked fish visual 2.0 | Make the fish itself readable during the fight | Stronger lateral motion; burst/tired motion profiles; orientation; bubbles/splash cues; clearer depth offset | Player can identify fish position and distinguish normal fighting, burst, and tired states without reading the state text | Ready for playtest |
 | F2 | Rod and arm feedback | Make reel-in/pay-out readable from first-person animation | Rod bend from tension; backward pull under load; reel-in motion; release posture; third-person follow-up | Left/right input and dangerous tension are visually obvious even with HUD hidden | Ready for playtest |
-| F3 | Fishing line physics 2.0 | Make the line a primary state indicator | Segmented line simulation; gravity sag; tension smoothing; high-tension vibration; block collision; shoreline handling | Slack line visibly hangs, controlled line carries slight sag, critical line is taut; line does not clip straight through terrain | Planned |
+| F3 | Fishing line physics 2.0 | Make the line a primary state indicator | Segmented line simulation; gravity sag; tension smoothing; high-tension vibration; block collision; shoreline handling | Slack line visibly hangs, controlled line carries slight sag, critical line is taut; line does not clip straight through terrain | Ready for playtest |
 | F4 | HUD 2.0 | Reduce UI dependence while improving clarity | Compact tension indicator; progress treatment; transient action cue; burst warning; HUD scale/config | HUD can be understood at a glance and does not dominate the screen | Planned |
 | F5 | Audio feedback | Add non-visual tension and fish-state information | Reel sound, drag/strain loop, burst splash, slack cue, line snap, landing hit/flop | Player can react to burst and critical tension without staring at the HUD | Planned |
 | F6 | Landing sequence | Make the successful catch feel physical | Final pull; water exit; airborne arc; line release; live fish landing and flop transition | Catch ends with one continuous physical sequence instead of an abrupt state swap | Planned |
@@ -107,3 +107,17 @@ Implemented in 1.1.6+26.2:
 - the transform is presentation-only; server fight authority is unchanged
 
 Third-person posture remains a follow-up validation item if the first-person motion is accepted in playtest.
+
+
+## F3 implementation checkpoint
+
+Implemented in 1.1.7+26.2:
+
+- slack line now uses a stronger nonlinear sag curve
+- increasing tension continuously straightens the line
+- high and critical tension add a small visible vibration to the line itself
+- intermediate line points test block collision and are lifted to the top of the encountered collision shape
+- endpoint collision is intentionally skipped to avoid the player's hand and the hook creating false corrections
+- the implementation remains rendering-only and does not move server-authoritative fight positions
+
+This is a first terrain-collision pass, not a full rope solver. Runtime testing should focus on shore edges, fences/slabs, and whether collision correction looks stable while the fish moves.
