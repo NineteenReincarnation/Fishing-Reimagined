@@ -163,6 +163,10 @@ public final class FishingFight {
     }
 
     private void updateLandingProgress(ReelAction action) {
+        if (landingProgress >= 1.0) {
+            return;
+        }
+
         double tensionRatio = tension / lineProfile.maxTension();
         double slackRatio =
             lineProfile.slackThreshold() / lineProfile.maxTension();
