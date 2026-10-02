@@ -7,20 +7,27 @@ Fishing Reimagined is a vanilla-oriented fishing rework for Minecraft Java Editi
 - Minecraft: **26.2**
 - Loaders: **Fabric + NeoForge**
 - Java: **25**
-- Mod version: **1.1.21+26.2**
+- Mod version: **1.1.22+26.2**
 - Development branch: **main**
 
 The current prototype uses a centered horizontal catch-bar fight, large world-space fish movement, a persistent rope renderer, and a live-fish landing sequence.
 
-## Controls
+## Special fishing mode
 
-Cast normally and wait for the vanilla bite. The fight starts automatically when the fish bites.
+Special fishing is **off by default**. With it disabled, fishing uses vanilla behavior.
+
+- **Toggle key:** `.` (period) by default. It is a normal Minecraft key mapping and can be rebound in Controls.
+- The toggle is persisted in `config/fishing_reimagined.json` as `specialFishingEnabled`.
+- The client synchronizes the setting to the server for the current player.
+
+When special fishing is enabled, cast normally and wait for the vanilla bite. The horizontal fight starts automatically when the fish bites.
 
 - **Hold use (default right mouse):** accelerate the catch zone to the right.
 - **Release use:** accelerate the catch zone to the left.
 - Keep the fish marker inside the catch zone to build Catch Progress.
 - Brief misses are tolerated; staying outside the zone causes progress to fall.
 - If progress reaches zero and control is not recovered for a while, the fish escapes.
+- A successful special catch now awards the vanilla-style **1–6 experience points** in addition to producing the live fish.
 
 The player is not expected to read fish states. Fish behavior only changes the movement rhythm.
 
