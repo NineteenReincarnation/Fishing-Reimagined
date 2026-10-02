@@ -7,10 +7,10 @@ Fishing Reimagined is a vanilla-oriented fishing rework for Minecraft Java Editi
 - Minecraft: **26.2**
 - Loaders: **Fabric + NeoForge**
 - Java: **25**
-- Mod version: **1.1.22+26.2**
+- Mod version: **1.1.23+26.2**
 - Development branch: **main**
 
-The current prototype uses a centered horizontal catch-bar fight, large world-space fish movement, a persistent rope renderer, and a live-fish landing sequence.
+The current prototype uses a centered horizontal catch-bar fight, one authoritative HUD/world fish motion, a persistent rope renderer connected at the fish head, and a live-fish landing sequence.
 
 ## Special fishing mode
 

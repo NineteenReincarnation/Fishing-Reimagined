@@ -13,9 +13,9 @@ public final class FishingFight {
     private static final double PLAYER_MAX_SPEED = 0.045;
     private static final double EDGE_BOUNCE = 0.28;
 
-    private static final int OUTSIDE_GRACE_TICKS = 10;
-    private static final double PROGRESS_GAIN = 0.0060;
-    private static final double PROGRESS_LOSS = -0.0038;
+    private static final int OUTSIDE_GRACE_TICKS = 7;
+    private static final double PROGRESS_GAIN = 0.0055;
+    private static final double PROGRESS_LOSS = -0.0046;
     private static final double PROGRESS_RESPONSE = 0.18;
     private static final double PROGRESS_DIRECTION_RESPONSE = 0.10;
 
@@ -34,6 +34,7 @@ public final class FishingFight {
     private double stamina;
     private double distance;
     private double lineLength;
+    private double radialTug;
 
     private double fishTrackPosition = 0.50;
     private double fishVelocity;
@@ -44,7 +45,7 @@ public final class FishingFight {
     private double catchZonePosition = 0.50;
     private double catchZoneVelocity;
 
-    private double landingProgress = 0.08;
+    private double landingProgress;
     private double progressVelocity;
     private int outsideTicks;
     private double escapePressure;
@@ -316,13 +317,19 @@ public final class FishingFight {
             }
 
             case BURST -> {
-                double separation =
-                    fishTrackPosition - catchZonePosition;
+                boolean runRight;
 
-                boolean runRight =
-                    Math.abs(separation) > 0.08
-                        ? separation > 0.0
-                        : random.nextBoolean();
+                if (Math.abs(fishVelocity) > 0.004) {
+                    runRight = fishVelocity > 0.0;
+                } else {
+                    double targetDirection =
+                        fishTargetPosition - fishTrackPosition;
+
+                    runRight =
+                        Math.abs(targetDirection) > 0.05
+                            ? targetDirection > 0.0
+                            : random.nextBoolean();
+                }
 
                 fishTargetPosition = runRight
                     ? random.nextDouble(0.88, 0.965)
@@ -357,8 +364,13 @@ public final class FishingFight {
 
         if (overlap > 0.0) {
             outsideTicks = 0;
+
+            double quality =
+                0.30
+                    + Math.pow(overlap, 1.25) * 0.70;
+
             targetVelocity =
-                PROGRESS_GAIN * (0.72 + overlap * 0.28);
+                PROGRESS_GAIN * quality;
         } else {
             outsideTicks++;
 
@@ -375,10 +387,10 @@ public final class FishingFight {
                 targetVelocity =
                     PROGRESS_LOSS
                         * (
-                            0.82
+                            0.88
                                 + Math.min(
-                                    0.55,
-                                    miss * 1.6
+                                    0.62,
+                                    miss * 1.8
                                 )
                         );
             }
@@ -398,7 +410,7 @@ public final class FishingFight {
 
         progressVelocity = clamp(
             progressVelocity,
-            PROGRESS_LOSS * 1.35,
+            PROGRESS_LOSS * 1.45,
             PROGRESS_GAIN
         );
 
@@ -471,24 +483,38 @@ public final class FishingFight {
             initialDistance - lineProfile.catchDistance()
         );
 
-        double runOffset =
-            lastIntent.burst()
-                ? 0.65
-                : lastIntent.mode() == FishFightMode.PULLING
-                    ? 0.20
-                    : 0.0;
+        double targetTug =
+            clamp(
+                lastIntent.outwardVelocity() * 18.0,
+                -0.35,
+                lastIntent.burst() ? 1.10 : 0.65
+            );
+
+        radialTug +=
+            (targetTug - radialTug)
+                * (
+                    lastIntent.burst()
+                        ? 0.30
+                        : 0.14
+                );
 
         double targetDistance =
             lineProfile.catchDistance()
                 + span * (1.0 - landingProgress)
-                + runOffset;
+                + radialTug;
 
         distance +=
             (targetDistance - distance)
-                * (lastIntent.burst() ? 0.24 : 0.15);
+                * (
+                    lastIntent.burst()
+                        ? 0.22
+                        : 0.13
+                );
 
         double slack =
-            overlapRatio() > 0.0 ? 0.16 : 0.46;
+            overlapRatio() > 0.0
+                ? 0.16
+                : 0.46;
 
         lineLength = Math.min(
             lineProfile.maxLineLength(),

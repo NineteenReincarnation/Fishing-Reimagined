@@ -1,68 +1,66 @@
 # Horizontal catch-bar design
 
-Version 1.1.21+26.2 replaces the tension/red-zone minigame with a horizontal tracking game inspired by the interaction structure of Stardew Valley fishing while retaining Fishing Reimagined's own implementation and world presentation.
+Version 1.1.23+26.2 keeps the horizontal Stardew-like catch game and restructures the world presentation so the HUD fish and the water-world fish are one authoritative motion.
 
-## Player rule
+## One fish, one motion source
 
-Keep the fish inside the moving catch zone.
+`fishTrackPosition` and `fishVelocity` are the authoritative lateral motion.
 
-There is no red tension zone in the basic minigame.
+They drive:
 
-## Horizontal control
+- the HUD fish marker
+- the server-side hook/fish anchor
+- the visible fish's movement direction
+- world-space lateral travel
+- rod and rope feedback
 
-The HUD contains one horizontal track.
+The client visual fish no longer adds a separate large sine-wave translation around the server anchor. Client code may smooth depth and orientation, but it must not invent a second horizontal path.
 
-- Hold the normal use key to accelerate the catch zone to the right.
-- Release the use key to accelerate the catch zone to the left.
-- The catch zone has velocity, damping, inertia, and a small edge bounce.
-- Switching from hold to release does not reverse the zone instantly.
+## Fish-line connection
 
-This preserves timing skill without requiring extra buttons.
+During a fight the server hook anchor follows the authoritative fish position. The visible fish is placed slightly behind that anchor according to its facing direction, so the hook/rope endpoint sits at the head/mouth area instead of next to a separately animated fish.
 
-## Fish movement
+The special-fight rope endpoint is also lowered from the vanilla bobber-height endpoint toward the fish head.
 
-The fish marker moves independently across the same track.
+## Continuous animation
 
-The existing internal fish modes still exist, but they are not shown as text:
+State changes no longer swap between unrelated positional sine formulas.
 
-- probing creates smaller wandering targets
-- pulling creates longer side-to-side travel
-- burst creates a fast run toward one side
-- recovering trends back toward the middle
-- tired movement is slower and shorter
+The visible fish now uses:
 
-Species profiles scale movement speed and catch-zone width, so fish can feel different without changing the player's rules.
+- smoothed yaw
+- slower body-yaw follow for readable turning
+- smoothly interpolated depth
+- speed-dependent small pitch motion
+- state-dependent response speed
 
-## Progress
+This removes the large teleport-like changes caused by switching sine frequency, amplitude, and depth in one tick.
 
-When the fish overlaps the catch zone, Catch Progress rises.
+## Visibility and particles
 
-When the fish leaves the zone:
+Normal fish stay in a shallower layer, tired fish no longer sit almost a full block below the surface, and burst particles are reduced.
 
-1. a short grace period prevents instant punishment;
-2. positive progress momentum fades;
-3. if the fish remains outside, progress begins falling smoothly.
+Particles are emitted mainly behind the fish as a wake, so they reinforce movement instead of obscuring the model.
 
-This avoids both extremes: progress never being lost, and tiny mistakes deleting progress immediately.
+## Progress balance
 
-## Escape
+Catch Progress now starts at 0%.
 
-Progress reaching zero is not an instant failure.
+- Outside-zone grace is shorter.
+- Edge contact gives only about 30% of maximum gain instead of roughly 72%.
+- Centered tracking gives the best gain.
+- Sustained misses remove progress more strongly.
 
-Only after progress is empty and the fish remains uncontrolled for an additional period does escape pressure accumulate. Regaining control quickly clears that pressure.
+## Fish behavior fairness
 
-## World coupling
+Burst direction no longer reads the player's catch-zone position.
 
-The horizontal fish position also drives the water-world fish anchor.
+A burst normally continues the fish's current velocity/target direction, falling back to randomness only when there is no meaningful movement direction.
 
-A fish moving right on the HUD moves to the corresponding side of the cast direction in the world. Bursts create larger and faster world movement. The existing rope renderer, rod animation, water effects, and live-fish landing sequence remain in place.
+## World distance
 
-## HUD
+Catch Progress still provides the long-term approach toward the player, but fish intent now adds a smoothed radial tug. A pulling or bursting fish can briefly take distance back even late in the fight.
 
-The fight HUD contains only:
+## Landing
 
-- the horizontal fish/catch-zone track
-- Catch Progress
-- a minimal hold-right / release-left hint
-
-No fish-state labels, stamina meter, tension meter, red zone, drag meter, or reel-efficiency display is required.
+Landing now lasts 12 ticks and targets a point roughly two blocks from the player with a deterministic side offset. The live fish receives only a small residual motion away from the player, avoiding the previous camera-filling fly-through.

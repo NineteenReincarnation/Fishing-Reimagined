@@ -19,7 +19,6 @@ import net.minecraft.world.entity.animal.fish.Cod;
 import net.minecraft.world.entity.animal.fish.Pufferfish;
 import net.minecraft.world.entity.animal.fish.Salmon;
 import net.minecraft.world.entity.animal.fish.TropicalFish;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.FishingHook;
 import net.minecraft.world.phys.Vec3;
 
@@ -171,6 +170,7 @@ public final class ClientHookedFishVisuals {
             -1_000_000_000
                 + hook.getId()
         );
+
         fish.setNoAi(true);
         fish.setNoGravity(true);
         fish.setInvulnerable(true);
@@ -180,7 +180,7 @@ public final class ClientHookedFishVisuals {
             hook.position()
                 .add(
                     0.0,
-                    -0.72,
+                    -0.30,
                     0.0
                 );
 
@@ -191,14 +191,22 @@ public final class ClientHookedFishVisuals {
             hook.getYRot(),
             0.0F
         );
+
         fish.setOldPosAndRot();
         level.addEntity(fish);
+
+        double yaw =
+            hook.getYRot();
 
         return new VisualFish(
             kind,
             fish,
             start,
-            hook.position()
+            hook.position(),
+            yaw,
+            yaw,
+            -0.30,
+            forwardFromYaw(yaw)
         );
     }
 
@@ -211,218 +219,111 @@ public final class ClientHookedFishVisuals {
         int state =
             access.fishingReimagined$fishState();
 
-        Player owner =
-            hook.getPlayerOwner();
-
-        Vec3 radial =
-            owner == null
-                ? new Vec3(
-                    1.0,
-                    0.0,
-                    0.0
-                )
-                : hook.position()
-                    .subtract(
-                        owner.position()
-                    );
-
-        Vec3 horizontal =
-            new Vec3(
-                radial.x,
-                0.0,
-                radial.z
-            );
-
-        if (horizontal.lengthSqr()
-            < 1.0E-6) {
-            horizontal =
-                new Vec3(
-                    1.0,
-                    0.0,
-                    0.0
-                );
-        } else {
-            horizontal =
-                horizontal.normalize();
-        }
-
-        Vec3 lateral =
-            new Vec3(
-                -horizontal.z,
-                0.0,
-                horizontal.x
-            );
-
         Vec3 hookVelocity =
             hook.position()
                 .subtract(
                     visual.lastHookPosition
                 );
 
-        double speciesScale =
-            switch (visual.kind) {
-                case COD -> 1.00;
-                case SALMON -> 1.18;
-                case PUFFERFISH -> 0.72;
-                case TROPICAL_FISH -> 1.32;
-            };
+        Vec3 horizontalVelocity =
+            new Vec3(
+                hookVelocity.x,
+                0.0,
+                hookVelocity.z
+            );
 
-        double time =
-            hook.tickCount
-                + hook.getId() * 0.37;
+        double horizontalSpeed =
+            horizontalVelocity.length();
 
-        double sideAmplitude;
-        double sideSpeed;
-        double baseDepth;
-        double verticalAmplitude;
-        double radialOffset;
-        float pitchAmplitude;
-        double trailFactor;
+        if (horizontalSpeed > 0.002) {
+            Vec3 movementDirection =
+                horizontalVelocity.scale(
+                    1.0 / horizontalSpeed
+                );
 
-        switch (state) {
-            case 3 -> {
-                sideAmplitude = 0.05;
-                sideSpeed = 0.30;
-                baseDepth = -0.10;
-                verticalAmplitude = 0.02;
-                radialOffset = 0.02;
-                pitchAmplitude = 5.0F;
-                trailFactor = 0.0;
-            }
-            case 1 -> {
-                sideAmplitude =
-                    1.25 * speciesScale;
-                sideSpeed = 1.18;
-                baseDepth = -0.34;
-                verticalAmplitude =
-                    0.28 * speciesScale;
-                radialOffset =
-                    0.78 * speciesScale;
-                pitchAmplitude = 24.0F;
-                trailFactor = 1.8;
-            }
-            case 2 -> {
-                sideAmplitude =
-                    0.18 * speciesScale;
-                sideSpeed = 0.16;
-                baseDepth = -0.96;
-                verticalAmplitude = 0.03;
-                radialOffset = 0.10;
-                pitchAmplitude = 3.0F;
-                trailFactor = 0.15;
-            }
-            case 4 -> {
-                sideAmplitude =
-                    0.88 * speciesScale;
-                sideSpeed = 0.72;
-                baseDepth = -0.52;
-                verticalAmplitude =
-                    0.16 * speciesScale;
-                radialOffset =
-                    0.56 * speciesScale;
-                pitchAmplitude = 17.0F;
-                trailFactor = 1.10;
-            }
-            case 5 -> {
-                sideAmplitude =
-                    0.30 * speciesScale;
-                sideSpeed = 0.28;
-                baseDepth = -0.82;
-                verticalAmplitude = 0.05;
-                radialOffset = 0.16;
-                pitchAmplitude = 5.0F;
-                trailFactor = 0.30;
-            }
-            default -> {
-                sideAmplitude =
-                    0.58 * speciesScale;
-                sideSpeed = 0.52;
-                baseDepth = -0.66;
-                verticalAmplitude =
-                    0.11 * speciesScale;
-                radialOffset =
-                    0.34 * speciesScale;
-                pitchAmplitude = 11.0F;
-                trailFactor = 0.55;
-            }
+            double targetYaw =
+                Math.toDegrees(
+                    Math.atan2(
+                        movementDirection.z,
+                        movementDirection.x
+                    )
+                )
+                    - 90.0;
+
+            visual.yaw =
+                approachDegrees(
+                    visual.yaw,
+                    targetYaw,
+                    state == 1
+                        ? 0.42
+                        : 0.28
+                );
+
+            visual.bodyYaw =
+                approachDegrees(
+                    visual.bodyYaw,
+                    visual.yaw,
+                    state == 1
+                        ? 0.30
+                        : 0.18
+                );
+
+            visual.forward =
+                visual.forward
+                    .lerp(
+                        movementDirection,
+                        state == 1
+                            ? 0.34
+                            : 0.22
+                    )
+                    .normalize();
+        } else {
+            visual.bodyYaw =
+                approachDegrees(
+                    visual.bodyYaw,
+                    visual.yaw,
+                    0.12
+                );
         }
 
-        double physicalOutwardSpeed =
-            Mth.clamp(
-                access
-                    .fishingReimagined$fishVelocity()
-                    / 0.14F,
-                -1.0F,
-                1.0F
+        double targetDepth =
+            switch (state) {
+                case 3 -> -0.08;
+                case 1 -> -0.18;
+                case 2 -> -0.38;
+                case 4 -> -0.24;
+                case 5 -> -0.32;
+                default -> -0.28;
+            };
+
+        visual.depth +=
+            (
+                targetDepth
+                    - visual.depth
+            ) * (
+                state == 1
+                    ? 0.24
+                    : 0.14
             );
 
-        double landingProgress =
-            Mth.clamp(
-                access
-                    .fishingReimagined$catchProgress(),
-                0.0F,
-                1.0F
-            );
-
-        double depth =
-            baseDepth
-                + landingProgress * 0.24;
-
-        double sideOffset =
-            Math.sin(
-                time * sideSpeed
-            )
-                * sideAmplitude;
-
-        double verticalOffset =
-            Math.sin(
-                time
-                    * sideSpeed
-                    * 0.78
-            )
-                * verticalAmplitude;
-
-        double stateSurge =
-            state == 1
-                ? 0.42
-                : state == 4
-                    ? 0.20
-                    : 0.0;
-
-        double surge =
-            Math.sin(
-                time
-                    * (
-                        state == 1
-                            ? 0.63
-                            : 0.44
-                    )
-            )
-                * stateSurge
-                * speciesScale
-                + physicalOutwardSpeed
-                    * (
-                        state == 1
-                            ? 0.46
-                            : 0.22
-                    );
+        double headOffset =
+            switch (visual.kind) {
+                case SALMON -> 0.36;
+                case COD -> 0.28;
+                case PUFFERFISH -> 0.18;
+                case TROPICAL_FISH -> 0.24;
+            };
 
         Vec3 target =
             hook.position()
-                .add(
-                    horizontal.scale(
-                        radialOffset + surge
-                    )
-                )
-                .add(
-                    lateral.scale(
-                        sideOffset
+                .subtract(
+                    visual.forward.scale(
+                        headOffset
                     )
                 )
                 .add(
                     0.0,
-                    depth
-                        + verticalOffset,
+                    visual.depth,
                     0.0
                 );
 
@@ -431,42 +332,47 @@ public final class ClientHookedFishVisuals {
                 visual.lastPosition
             );
 
-        Vec3 facingMovement =
-            new Vec3(
-                movement.x
-                    + hookVelocity.x
-                        * trailFactor,
-                0.0,
-                movement.z
-                    + hookVelocity.z
-                        * trailFactor
+        float verticalPitch =
+            (float) Mth.clamp(
+                -hookVelocity.y * 72.0,
+                -16.0,
+                16.0
             );
 
-        if (facingMovement.lengthSqr()
-            > 1.0E-5) {
-            float yaw =
-                (float) (
-                    Mth.atan2(
-                        facingMovement.z,
-                        facingMovement.x
-                    )
-                        * 180.0
-                        / Math.PI
+        float motionPitch =
+            (float) (
+                Math.sin(
+                    hook.tickCount
+                        * (
+                            0.28
+                                + Math.min(
+                                    0.36,
+                                    horizontalSpeed
+                                        * 8.0
+                                )
+                        )
                 )
-                    - 90.0F;
+                    * Math.min(
+                        5.0,
+                        1.5
+                            + horizontalSpeed
+                                * 32.0
+                    )
+            );
 
-            visual.fish.setYRot(yaw);
-            visual.fish.yBodyRot = yaw;
-            visual.fish.yHeadRot = yaw;
-        }
+        visual.fish.setYRot(
+            (float) visual.yaw
+        );
+
+        visual.fish.yBodyRot =
+            (float) visual.bodyYaw;
+
+        visual.fish.yHeadRot =
+            (float) visual.yaw;
 
         visual.fish.setXRot(
-            (float) Math.sin(
-                time
-                    * sideSpeed
-                    * 1.35
-            )
-                * pitchAmplitude
+            verticalPitch
+                + motionPitch
         );
 
         visual.fish.setDeltaMovement(
@@ -479,123 +385,130 @@ public final class ClientHookedFishVisuals {
             target.z
         );
 
-        visual.lastPosition = target;
-        visual.lastHookPosition =
-            hook.position();
-
         if (visual.lastState != state) {
             emitStateTransitionParticles(
                 level,
                 hook,
                 target,
-                state
+                state,
+                visual.forward
             );
             visual.lastState = state;
         }
 
-        emitStateParticles(
+        emitMotionParticles(
             level,
             hook,
             target,
             state,
-            lateral,
-            movement,
-            time
+            visual.forward,
+            horizontalSpeed
         );
+
+        visual.lastPosition = target;
+        visual.lastHookPosition =
+            hook.position();
     }
 
     private static void emitStateTransitionParticles(
         ClientLevel level,
         FishingHook hook,
         Vec3 position,
-        int state
+        int state,
+        Vec3 forward
     ) {
         if (state != 1) {
             return;
         }
 
-        for (int i = 0; i < 9; i++) {
+        Vec3 wakeDirection =
+            forward.scale(-1.0);
+
+        for (int i = 0; i < 4; i++) {
             double spread =
-                (i - 4) * 0.065;
+                (i - 1.5) * 0.07;
 
             level.addParticle(
                 ParticleTypes.SPLASH,
-                position.x + spread,
-                hook.getY() + 0.10,
-                position.z - spread,
-                spread * 0.14,
-                0.08
-                    + Math.abs(spread)
-                        * 0.16,
-                -spread * 0.14
+                position.x
+                    + wakeDirection.x
+                        * 0.20,
+                hook.getY() + 0.05,
+                position.z
+                    + wakeDirection.z
+                        * 0.20,
+                wakeDirection.x * 0.05
+                    + spread,
+                0.05,
+                wakeDirection.z * 0.05
+                    - spread
             );
         }
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 5; i++) {
             level.addParticle(
                 ParticleTypes.BUBBLE,
-                position.x,
-                position.y + 0.12,
-                position.z,
-                (i - 4.5) * 0.014,
-                0.035,
-                (4.5 - i) * 0.014
+                position.x
+                    + wakeDirection.x
+                        * (
+                            0.10
+                                + i * 0.05
+                        ),
+                position.y + 0.08,
+                position.z
+                    + wakeDirection.z
+                        * (
+                            0.10
+                                + i * 0.05
+                        ),
+                wakeDirection.x * 0.015,
+                0.02,
+                wakeDirection.z * 0.015
             );
         }
     }
 
-    private static void emitStateParticles(
+    private static void emitMotionParticles(
         ClientLevel level,
         FishingHook hook,
         Vec3 position,
         int state,
-        Vec3 lateral,
-        Vec3 movement,
-        double time
+        Vec3 forward,
+        double speed
     ) {
-        if (state == 3) {
-            return;
-        }
+        Vec3 wakeDirection =
+            forward.scale(-1.0);
 
-        if (state == 1) {
-            double speed =
-                Math.sqrt(
-                    movement.x * movement.x
-                        + movement.z
-                            * movement.z
-                );
-
-            if (hook.tickCount % 2 == 0) {
-                double drift =
-                    Math.sin(
-                        time * 0.8
-                    ) * 0.08;
-
-                level.addParticle(
-                    ParticleTypes.BUBBLE,
-                    position.x
-                        - movement.x * 2.4,
-                    position.y + 0.10,
-                    position.z
-                        - movement.z * 2.4,
-                    lateral.x * drift,
-                    0.03,
-                    lateral.z * drift
-                );
-            }
+        if (
+            state == 1
+                && hook.tickCount % 4 == 0
+        ) {
+            level.addParticle(
+                ParticleTypes.BUBBLE,
+                position.x
+                    + wakeDirection.x
+                        * 0.28,
+                position.y + 0.08,
+                position.z
+                    + wakeDirection.z
+                        * 0.28,
+                wakeDirection.x * 0.02,
+                0.018,
+                wakeDirection.z * 0.02
+            );
 
             if (
-                hook.tickCount % 2 == 0
-                    && speed > 0.10
+                speed > 0.08
+                    && hook.tickCount % 8 == 0
             ) {
                 level.addParticle(
                     ParticleTypes.SPLASH,
                     position.x,
-                    hook.getY() + 0.08,
+                    hook.getY() + 0.04,
                     position.z,
-                    -movement.x * 0.18,
-                    0.055,
-                    -movement.z * 0.18
+                    wakeDirection.x * 0.05,
+                    0.035,
+                    wakeDirection.z * 0.05
                 );
             }
 
@@ -603,23 +516,51 @@ public final class ClientHookedFishVisuals {
         }
 
         if (
-            (state == 0 || state == 4)
-                && hook.tickCount
-                    % (state == 4 ? 4 : 6)
-                    == 0
+            state != 3
+                && speed > 0.025
+                && hook.tickCount % 10 == 0
         ) {
             level.addParticle(
                 ParticleTypes.BUBBLE,
                 position.x
-                    - movement.x,
-                position.y + 0.08,
+                    + wakeDirection.x
+                        * 0.20,
+                position.y + 0.06,
                 position.z
-                    - movement.z,
+                    + wakeDirection.z
+                        * 0.20,
                 0.0,
-                0.018,
+                0.012,
                 0.0
             );
         }
+    }
+
+    private static double approachDegrees(
+        double current,
+        double target,
+        double response
+    ) {
+        double delta =
+            Mth.wrapDegrees(
+                target - current
+            );
+
+        return current
+            + delta * response;
+    }
+
+    private static Vec3 forwardFromYaw(
+        double yaw
+    ) {
+        double radians =
+            Math.toRadians(yaw);
+
+        return new Vec3(
+            -Math.sin(radians),
+            0.0,
+            Math.cos(radians)
+        );
     }
 
     private static void removeVisual(
@@ -657,20 +598,31 @@ public final class ClientHookedFishVisuals {
 
         private Vec3 lastPosition;
         private Vec3 lastHookPosition;
+        private double yaw;
+        private double bodyYaw;
+        private double depth;
+        private Vec3 forward;
         private int lastState = -1;
 
         private VisualFish(
             HookedFishKind kind,
             AbstractFish fish,
             Vec3 lastPosition,
-            Vec3 lastHookPosition
+            Vec3 lastHookPosition,
+            double yaw,
+            double bodyYaw,
+            double depth,
+            Vec3 forward
         ) {
             this.kind = kind;
             this.fish = fish;
-            this.lastPosition =
-                lastPosition;
+            this.lastPosition = lastPosition;
             this.lastHookPosition =
                 lastHookPosition;
+            this.yaw = yaw;
+            this.bodyYaw = bodyYaw;
+            this.depth = depth;
+            this.forward = forward;
         }
     }
 }

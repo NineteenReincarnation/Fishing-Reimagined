@@ -154,7 +154,7 @@ public abstract class FishingHookMixin
     private int nibble;
 
     @Unique
-    private static final int FISHING_REIMAGINED_LANDING_TICKS = 10;
+    private static final int FISHING_REIMAGINED_LANDING_TICKS = 12;
 
     @Unique
     private HookedFish fishingReimagined$hookedFish;
@@ -644,10 +644,27 @@ public abstract class FishingHookMixin
             horizontal = horizontal.normalize();
         }
 
+        Vec3 side =
+            new Vec3(
+                -horizontal.z,
+                0.0,
+                horizontal.x
+            );
+
+        double sideSign =
+            (hook.getId() & 1) == 0
+                ? 1.0
+                : -1.0;
+
         Vec3 target =
             owner.position()
-                .add(horizontal.scale(0.90))
-                .add(0.0, 0.32, 0.0);
+                .add(horizontal.scale(1.95))
+                .add(
+                    side.scale(
+                        sideSign * 0.75
+                    )
+                )
+                .add(0.0, 0.24, 0.0);
 
         double t =
             Math.min(
@@ -661,7 +678,7 @@ public abstract class FishingHookMixin
             fishingReimagined$landingStart
                 .lerp(target, eased);
         double arc =
-            Math.sin(Math.PI * t) * 0.82;
+            Math.sin(Math.PI * t) * 0.92;
 
         hook.setPos(
             base.x,

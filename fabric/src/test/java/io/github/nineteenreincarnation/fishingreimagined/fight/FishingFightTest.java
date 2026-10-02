@@ -19,6 +19,19 @@ final class FishingFightTest {
             );
 
     @Test
+    void catchStartsAtZeroProgress() {
+        FishingFight fight =
+            create();
+
+        assertEquals(
+            0.0,
+            fight.snapshot()
+                .landingProgress(),
+            1.0E-9
+        );
+    }
+
+    @Test
     void holdingUseMovesCatchZoneRight() {
         FishingFight fight = create();
 
@@ -85,7 +98,7 @@ final class FishingFightTest {
         double before =
             fight.snapshot().landingProgress();
 
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 10; i++) {
             FightSnapshot snapshot =
                 fight.snapshot();
 
@@ -125,7 +138,7 @@ final class FishingFightTest {
 
         for (
             int i = 0;
-            i < 1400 && !result.isTerminal();
+            i < 1800 && !result.isTerminal();
             i++
         ) {
             double error =

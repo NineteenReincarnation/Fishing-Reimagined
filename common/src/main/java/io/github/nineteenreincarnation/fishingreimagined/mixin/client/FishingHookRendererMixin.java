@@ -102,7 +102,7 @@ public abstract class FishingHookRendererMixin {
 
         Vec3 start = new Vec3(
             0.0,
-            0.25,
+            -0.16,
             0.0
         );
 
