@@ -4,13 +4,14 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.animal.fish.AbstractFish;
 
 public enum HookedFishKind {
-    COD(EntityType.COD, 60),
-    SALMON(EntityType.SALMON, 30),
-    PUFFERFISH(EntityType.PUFFERFISH, 5),
-    TROPICAL_FISH(EntityType.TROPICAL_FISH, 5);
+    COD(EntityTypes.COD, 60),
+    SALMON(EntityTypes.SALMON, 30),
+    PUFFERFISH(EntityTypes.PUFFERFISH, 5),
+    TROPICAL_FISH(EntityTypes.TROPICAL_FISH, 5);
 
     private final EntityType<? extends AbstractFish> entityType;
     private final int weight;
