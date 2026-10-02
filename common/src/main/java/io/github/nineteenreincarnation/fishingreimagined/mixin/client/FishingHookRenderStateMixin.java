@@ -15,6 +15,9 @@ public abstract class FishingHookRenderStateMixin
     @Unique
     private float fishingReimagined$tensionRatio;
 
+    @Unique
+    private int fishingReimagined$hookId;
+
     @Override
     public void fishingReimagined$setFightActive(boolean active) {
         fishingReimagined$fightActive = active;
@@ -33,5 +36,15 @@ public abstract class FishingHookRenderStateMixin
     @Override
     public float fishingReimagined$tensionRatio() {
         return fishingReimagined$tensionRatio;
+    }
+
+    @Override
+    public void fishingReimagined$setHookId(int hookId) {
+        fishingReimagined$hookId = hookId;
+    }
+
+    @Override
+    public int fishingReimagined$hookId() {
+        return fishingReimagined$hookId;
     }
 }

@@ -8,4 +8,8 @@ public interface FishingHookRenderStateAccess {
     void fishingReimagined$setTensionRatio(float tensionRatio);
 
     float fishingReimagined$tensionRatio();
+
+    void fishingReimagined$setHookId(int hookId);
+
+    int fishingReimagined$hookId();
 }
