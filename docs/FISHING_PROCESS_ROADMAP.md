@@ -28,7 +28,7 @@ The reference bar is the clarity of Better Fishing plus the physical readability
 | F6 | Landing sequence | Make the successful catch feel physical | Final pull; water exit; airborne arc; line release; live fish landing and flop transition | Catch ends with one continuous physical sequence instead of an abrupt state swap | Ready for playtest |
 | F7 | Species fight profiles | Make fish types feel mechanically different | Data-driven strength, stamina, burst style, lateral style, size and landing mass | At least four vanilla fish have distinct but learnable fight behavior without changing the core rules | Ready for playtest |
 | F8 | Input and accessibility pass | Make the system robust outside the default setup | Remapping strategy, controller path, HUD options, latency smoothing, left-handed/third-person checks | No core action conflicts; feedback remains usable across common control and GUI configurations | Ready for playtest |
-| F9 | Compatibility and runtime validation | Validate the full loop rather than only compilation | Fabric + NeoForge runtime; multiplayer; shaders/resource packs; performance; edge cases; recorded playtests | Both loaders pass real-world fishing sessions and no known blocker remains in the core fight loop | Planned |
+| F9 | Compatibility and runtime validation | Validate the full loop rather than only compilation | Fabric + NeoForge runtime; multiplayer; shaders/resource packs; performance; edge cases; recorded playtests | Both loaders pass real-world fishing sessions and no known blocker remains in the core fight loop | Runtime validation required |
 
 ## F1 specification — Hooked fish visual 2.0
 
@@ -192,3 +192,15 @@ Implemented in 1.1.12+26.2:
 - HUD placement uses scaled GUI coordinates and therefore follows Minecraft GUI scale
 
 Controller support remains dependent on whatever input layer maps controller actions into Minecraft's attack/use mappings; a dedicated controller API is intentionally not introduced into common code.
+
+
+## F9 automated validation checkpoint
+
+Prepared in 1.1.13+26.2:
+
+- unit coverage now checks that burst reeling gives much less progress than calm controlled reeling
+- unit coverage checks that overloaded line tension does not reward landing progress
+- a dedicated runtime playtest protocol now covers both loaders, multiplayer, remapped controls, GUI scale, shoreline collision, shaders and landing behavior
+- CI continues to build both loader artifacts on every main push
+
+F9 cannot be marked complete from CI alone. It remains open until the runtime matrix in PLAYTEST_PROTOCOL.md is executed.

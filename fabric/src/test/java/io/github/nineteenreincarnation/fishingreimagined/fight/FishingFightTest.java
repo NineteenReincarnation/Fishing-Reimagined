@@ -190,4 +190,70 @@ final class FishingFightTest {
             result.phase()
         );
     }
+
+    @Test
+    void burstReelingMakesLessProgressThanCalmReeling() {
+        FishBehavior calm =
+            (profile, random) -> snapshot ->
+                new FishIntent(
+                    0.0,
+                    0.0,
+                    0.28,
+                    false
+                );
+        FishBehavior burst =
+            (profile, random) -> snapshot ->
+                new FishIntent(
+                    0.0,
+                    0.0,
+                    1.0,
+                    true
+                );
+
+        FishingFight calmFight = new FishingFight(
+            FishProfile.PROTOTYPE,
+            LineProfile.PROTOTYPE,
+            calm,
+            RandomGenerator.getDefault(),
+            10.0,
+            8.0
+        );
+        FishingFight burstFight = new FishingFight(
+            FishProfile.PROTOTYPE,
+            LineProfile.PROTOTYPE,
+            burst,
+            RandomGenerator.getDefault(),
+            10.0,
+            8.0
+        );
+
+        double calmProgress =
+            calmFight.tick(ReelAction.REEL_IN)
+                .landingProgress();
+        double burstProgress =
+            burstFight.tick(ReelAction.REEL_IN)
+                .landingProgress();
+
+        assertTrue(calmProgress > burstProgress);
+        assertTrue(burstProgress > 0.0);
+    }
+
+    @Test
+    void overloadedLineDoesNotRewardProgress() {
+        FishingFight fight = new FishingFight(
+            FishProfile.PROTOTYPE,
+            LineProfile.PROTOTYPE,
+            STILL_FISH,
+            RandomGenerator.getDefault(),
+            10.0,
+            5.0
+        );
+
+        FightSnapshot result =
+            fight.tick(ReelAction.REEL_IN);
+
+        assertEquals(0.0, result.landingProgress());
+        assertTrue(result.tensionRatio() > 1.0);
+    }
+
 }
