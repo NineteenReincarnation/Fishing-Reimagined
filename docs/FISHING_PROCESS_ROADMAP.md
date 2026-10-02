@@ -26,7 +26,7 @@ The reference bar is the clarity of Better Fishing plus the physical readability
 | F4 | HUD 2.0 | Reduce UI dependence while improving clarity | Compact tension indicator; progress treatment; transient action cue; burst warning; HUD scale/config | HUD can be understood at a glance and does not dominate the screen | Ready for playtest |
 | F5 | Audio feedback | Add non-visual tension and fish-state information | Reel sound, drag/strain loop, burst splash, slack cue, line snap, landing hit/flop | Player can react to burst and critical tension without staring at the HUD | Ready for playtest |
 | F6 | Landing sequence | Make the successful catch feel physical | Final pull; water exit; airborne arc; line release; live fish landing and flop transition | Catch ends with one continuous physical sequence instead of an abrupt state swap | Ready for playtest |
-| F7 | Species fight profiles | Make fish types feel mechanically different | Data-driven strength, stamina, burst style, lateral style, size and landing mass | At least four vanilla fish have distinct but learnable fight behavior without changing the core rules | Planned |
+| F7 | Species fight profiles | Make fish types feel mechanically different | Data-driven strength, stamina, burst style, lateral style, size and landing mass | At least four vanilla fish have distinct but learnable fight behavior without changing the core rules | Ready for playtest |
 | F8 | Input and accessibility pass | Make the system robust outside the default setup | Remapping strategy, controller path, HUD options, latency smoothing, left-handed/third-person checks | No core action conflicts; feedback remains usable across common control and GUI configurations | Planned |
 | F9 | Compatibility and runtime validation | Validate the full loop rather than only compilation | Fabric + NeoForge runtime; multiplayer; shaders/resource packs; performance; edge cases; recorded playtests | Both loaders pass real-world fishing sessions and no known blocker remains in the core fight loop | Planned |
 
@@ -165,3 +165,17 @@ Implemented in 1.1.10+26.2:
 - the live fish retains vanilla health and land-flop behavior
 
 The next playtest should verify that the arc clears common shore edges and does not place the fish inside the player or blocks.
+
+
+## F7 implementation checkpoint
+
+Implemented in 1.1.11+26.2:
+
+- cod is the baseline fish: moderate stamina, low burst frequency, steady turning
+- salmon has the highest pull strength and stamina, with longer and stronger burst runs
+- pufferfish is slower and easier to control, with short weak bursts
+- tropical fish is light but erratic, with frequent short bursts and the strongest lateral turning
+- HookedFish now builds its fight from the selected species profile instead of one universal prototype profile
+- lateral steering response is also species-specific
+
+The four fish still use the same core rules, so learning the system transfers between species while their rhythm and difficulty differ.

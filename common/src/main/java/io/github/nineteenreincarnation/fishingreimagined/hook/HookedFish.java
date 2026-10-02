@@ -17,8 +17,6 @@ import net.minecraft.world.phys.Vec3;
 
 public final class HookedFish {
     private static final double MAX_VISUAL_RADIUS = 31.0;
-    private static final double TURN_RESPONSE = 0.20;
-
     private final HookedFishKind kind;
     private final FishingFight fight;
     private final double waterY;
@@ -51,7 +49,7 @@ public final class HookedFish {
         HookedFishKind kind = HookedFishKind.random(random);
 
         FishingFight fight = new FishingFight(
-            FishProfile.PROTOTYPE,
+            kind.profile(),
             LineProfile.PROTOTYPE,
             BasicFishBehavior.INSTANCE,
             new Random(random.nextLong()),
@@ -71,7 +69,7 @@ public final class HookedFish {
         FightSnapshot snapshot = fight.tick(action);
         bearing +=
             snapshot.fishIntent().lateralTurnRadians()
-                * TURN_RESPONSE;
+                * kind.turnResponse();
         return snapshot;
     }
 
