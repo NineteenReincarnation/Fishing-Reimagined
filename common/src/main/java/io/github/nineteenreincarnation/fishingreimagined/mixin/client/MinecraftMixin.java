@@ -30,7 +30,13 @@ public abstract class MinecraftMixin {
         boolean down,
         CallbackInfo ci
     ) {
-        if (ClientFishingInput.isFightActive((Minecraft) (Object) this)) {
+        Minecraft minecraft =
+            (Minecraft) (Object) this;
+
+        if (
+            ClientFishingInput.isFightActive(minecraft)
+                && !ClientFishingInput.isCatchHanging(minecraft)
+        ) {
             ci.cancel();
         }
     }
