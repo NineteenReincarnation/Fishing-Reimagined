@@ -7,5 +7,6 @@
   "message.fishing_reimagined.fight_started": "Fish on! Hold use to move right, release to move left, and keep the fish in the catch zone",
   "key.fishing_reimagined.toggle_special_fishing": "Toggle Special Fishing Mode",
   "message.fishing_reimagined.mode_enabled": "Special Fishing Mode: Enabled",
-  "message.fishing_reimagined.mode_disabled": "Special Fishing Mode: Disabled"
+  "message.fishing_reimagined.mode_disabled": "Special Fishing Mode: Disabled",
+  "message.fishing_reimagined.catch_hanging": "Catch landed · Use the rod again to take the fish off the line"
 }
