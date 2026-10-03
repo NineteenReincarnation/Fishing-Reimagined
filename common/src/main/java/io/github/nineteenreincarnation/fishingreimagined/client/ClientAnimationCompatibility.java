@@ -97,18 +97,6 @@ public final class ClientAnimationCompatibility {
             return;
         }
 
-        boolean anyCem =
-            hasMatchingResource(
-                minecraft,
-                "optifine/cem",
-                false
-            )
-                || hasMatchingResource(
-                    minecraft,
-                    "emf/cem",
-                    false
-                );
-
         boolean fishCem =
             hasMatchingResource(
                 minecraft,
@@ -132,7 +120,7 @@ public final class ClientAnimationCompatibility {
                 );
 
         fishAnimationPack =
-            fishCem || anyCem;
+            fishCem;
 
         playerAnimationPack =
             animationJson
