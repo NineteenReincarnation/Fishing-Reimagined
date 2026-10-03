@@ -7,5 +7,6 @@
   "message.fishing_reimagined.fight_started": "鱼咬钩了！按住右键向右，松开向左，把鱼留在捕获区",
   "key.fishing_reimagined.toggle_special_fishing": "切换特色钓鱼模式",
   "message.fishing_reimagined.mode_enabled": "特色钓鱼模式：已开启",
-  "message.fishing_reimagined.mode_disabled": "特色钓鱼模式：已关闭"
+  "message.fishing_reimagined.mode_disabled": "特色钓鱼模式：已关闭",
+  "message.fishing_reimagined.catch_hanging": "鱼已收上来 · 右键取下鱼"
 }
