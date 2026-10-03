@@ -25,14 +25,16 @@ public final class ClientFishingInput {
         ClientHookedFishVisuals.tick(minecraft);
 
         ReelAction action = ReelAction.HOLD;
-        if (isFightActive(minecraft)) {
+        if (
+            isFightActive(minecraft)
+                && !isCatchHanging(minecraft)
+        ) {
             action = minecraft.options.keyUse.isDown()
                 ? ReelAction.REEL_IN
                 : ReelAction.PAY_OUT;
         }
 
         sendIfChanged(action);
-        ClientFishingPose.tick(minecraft);
         ClientFishingAudio.tick(minecraft);
     }
 
@@ -44,6 +46,22 @@ public final class ClientFishingInput {
         FishingHook hook = minecraft.player.fishing;
         return hook instanceof FishingHookFightAccess access
             && access.fishingReimagined$isFightActive();
+    }
+
+    public static boolean isCatchHanging(
+        Minecraft minecraft
+    ) {
+        if (minecraft.player == null) {
+            return false;
+        }
+
+        FishingHook hook =
+            minecraft.player.fishing;
+
+        return hook
+            instanceof FishingHookFightAccess access
+            && access
+                .fishingReimagined$isCaughtHanging();
     }
 
     public static ReelAction currentAction() {
