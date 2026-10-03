@@ -91,18 +91,41 @@ public final class SpecialFishingConfig {
                     ).getAsBoolean();
             }
 
+            boolean needsRewrite =
+                object == null
+                    || !object.has(
+                        "animationCompatibility"
+                    );
+
             if (
                 object != null
                     && object.has(
                         "animationCompatibility"
                     )
             ) {
+                String rawMode =
+                    object.get(
+                        "animationCompatibility"
+                    ).getAsString();
+
                 animationCompatibilityMode =
                     normalizeAnimationMode(
-                        object.get(
-                            "animationCompatibility"
-                        ).getAsString()
+                        rawMode
                     );
+
+                needsRewrite =
+                    !animationCompatibilityMode
+                        .equals(
+                            rawMode
+                                .trim()
+                                .toLowerCase(
+                                    Locale.ROOT
+                                )
+                        );
+            }
+
+            if (needsRewrite) {
+                save();
             }
         } catch (
             IOException
