@@ -8,6 +8,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Locale;
 
 public final class SpecialFishingConfig {
     private static final Gson GSON =
@@ -23,6 +24,9 @@ public final class SpecialFishingConfig {
 
     private static boolean specialFishingEnabled;
 
+    private static String animationCompatibilityMode =
+        "auto";
+
     static {
         load();
     }
@@ -32,6 +36,10 @@ public final class SpecialFishingConfig {
 
     public static boolean specialFishingEnabled() {
         return specialFishingEnabled;
+    }
+
+    public static String animationCompatibilityMode() {
+        return animationCompatibilityMode;
     }
 
     public static void setSpecialFishingEnabled(
@@ -51,6 +59,7 @@ public final class SpecialFishingConfig {
 
     private static void load() {
         specialFishingEnabled = false;
+        animationCompatibilityMode = "auto";
 
         if (!Files.exists(CONFIG_PATH)) {
             save();
@@ -81,12 +90,47 @@ public final class SpecialFishingConfig {
                         "specialFishingEnabled"
                     ).getAsBoolean();
             }
+
+            if (
+                object != null
+                    && object.has(
+                        "animationCompatibility"
+                    )
+            ) {
+                animationCompatibilityMode =
+                    normalizeAnimationMode(
+                        object.get(
+                            "animationCompatibility"
+                        ).getAsString()
+                    );
+            }
         } catch (
             IOException
                 | RuntimeException ignored
         ) {
             specialFishingEnabled = false;
+            animationCompatibilityMode = "auto";
         }
+    }
+
+    private static String normalizeAnimationMode(
+        String value
+    ) {
+        if (value == null) {
+            return "auto";
+        }
+
+        String normalized =
+            value.trim()
+                .toLowerCase(Locale.ROOT);
+
+        return switch (normalized) {
+            case "builtin",
+                "resource_pack",
+                "overlay" ->
+                normalized;
+            default -> "auto";
+        };
     }
 
     private static void save() {
@@ -96,6 +140,11 @@ public final class SpecialFishingConfig {
         object.addProperty(
             "specialFishingEnabled",
             specialFishingEnabled
+        );
+
+        object.addProperty(
+            "animationCompatibility",
+            animationCompatibilityMode
         );
 
         try {
