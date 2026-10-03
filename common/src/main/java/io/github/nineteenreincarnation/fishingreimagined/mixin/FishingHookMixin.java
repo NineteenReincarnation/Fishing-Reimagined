@@ -682,44 +682,10 @@ public abstract class FishingHookMixin
 
         fishingReimagined$landingTicks++;
 
-        Vec3 fromPlayer =
-            fishingReimagined$landingStart
-                .subtract(owner.position());
-        Vec3 horizontal =
-            new Vec3(
-                fromPlayer.x,
-                0.0,
-                fromPlayer.z
-            );
-
-        if (horizontal.lengthSqr() < 1.0E-6) {
-            horizontal =
-                new Vec3(0.0, 0.0, 1.0);
-        } else {
-            horizontal = horizontal.normalize();
-        }
-
-        Vec3 side =
-            new Vec3(
-                -horizontal.z,
-                0.0,
-                horizontal.x
-            );
-
-        double sideSign =
-            (hook.getId() & 1) == 0
-                ? 1.0
-                : -1.0;
-
         Vec3 target =
-            owner.position()
-                .add(horizontal.scale(1.95))
-                .add(
-                    side.scale(
-                        sideSign * 0.75
-                    )
-                )
-                .add(0.0, 0.24, 0.0);
+            fishingReimagined$hangingAnchorPosition(
+                owner
+            );
 
         double t =
             Math.min(
@@ -733,7 +699,7 @@ public abstract class FishingHookMixin
             fishingReimagined$landingStart
                 .lerp(target, eased);
         double arc =
-            Math.sin(Math.PI * t) * 0.92;
+            Math.sin(Math.PI * t) * 0.58;
 
         hook.setPos(
             base.x,
@@ -823,9 +789,8 @@ public abstract class FishingHookMixin
     }
 
     @Unique
-    private void fishingReimagined$moveHangingAnchor(
-        Player owner,
-        FishingHook hook
+    private Vec3 fishingReimagined$hangingAnchorPosition(
+        Player owner
     ) {
         Vec3 look =
             owner.getLookAngle();
@@ -862,22 +827,32 @@ public abstract class FishingHookMixin
         double handSide =
             fishingReimagined$rodHand
                     == InteractionHand.MAIN_HAND
-                ? 0.58
-                : -0.58;
+                ? 0.70
+                : -0.70;
 
+        return owner.position()
+            .add(
+                horizontal.scale(1.32)
+            )
+            .add(
+                right.scale(handSide)
+            )
+            .add(
+                0.0,
+                1.08,
+                0.0
+            );
+    }
+
+    @Unique
+    private void fishingReimagined$moveHangingAnchor(
+        Player owner,
+        FishingHook hook
+    ) {
         Vec3 anchor =
-            owner.position()
-                .add(
-                    horizontal.scale(1.18)
-                )
-                .add(
-                    right.scale(handSide)
-                )
-                .add(
-                    0.0,
-                    1.18,
-                    0.0
-                );
+            fishingReimagined$hangingAnchorPosition(
+                owner
+            );
 
         hook.setPos(
             anchor.x,
