@@ -41,16 +41,4 @@ public abstract class MinecraftMixin {
         }
     }
 
-    @Inject(method = "startUseItem", at = @At("HEAD"), cancellable = true)
-    private void fishingReimagined$replaceUseWithPayout(CallbackInfo ci) {
-        Minecraft minecraft =
-            (Minecraft) (Object) this;
-
-        if (
-            ClientFishingInput.isFightActive(minecraft)
-                && !ClientFishingInput.isCatchHanging(minecraft)
-        ) {
-            ci.cancel();
-        }
-    }
 }
