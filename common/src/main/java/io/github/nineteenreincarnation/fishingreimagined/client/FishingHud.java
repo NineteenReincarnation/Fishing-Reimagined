@@ -31,7 +31,8 @@ public final class FishingHud {
 
         if (!(hook
             instanceof FishingHookFightAccess access)
-            || !access.fishingReimagined$isFightActive()) {
+            || !access.fishingReimagined$isFightActive()
+            || access.fishingReimagined$isCaughtHanging()) {
             return;
         }
 
