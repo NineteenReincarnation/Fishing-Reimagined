@@ -36,6 +36,23 @@ public abstract class FishingRodItemMixin {
 
         if (
             access
+                .fishingReimagined$isCaughtHanging()
+        ) {
+            if (!level.isClientSide()) {
+                access
+                    .fishingReimagined$takeCaughtFish(
+                        player
+                    );
+            }
+
+            cir.setReturnValue(
+                InteractionResult.SUCCESS
+            );
+            return;
+        }
+
+        if (
+            access
                 .fishingReimagined$isFightActive()
         ) {
             cir.setReturnValue(
