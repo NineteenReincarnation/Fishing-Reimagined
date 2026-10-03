@@ -235,6 +235,75 @@ public final class ClientHookedFishVisuals {
         double horizontalSpeed =
             horizontalVelocity.length();
 
+        if (
+            access
+                .fishingReimagined$isCaughtHanging()
+        ) {
+            Vec3 target =
+                hook.position()
+                    .add(
+                        0.0,
+                        -0.52,
+                        0.0
+                    );
+
+            Vec3 movement =
+                target.subtract(
+                    visual.lastPosition
+                );
+
+            double hangingYaw =
+                hook.getPlayerOwner() != null
+                    ? hook.getPlayerOwner()
+                        .getYRot()
+                    : visual.yaw;
+
+            visual.yaw =
+                approachDegrees(
+                    visual.yaw,
+                    hangingYaw,
+                    0.22
+                );
+
+            visual.bodyYaw =
+                approachDegrees(
+                    visual.bodyYaw,
+                    visual.yaw,
+                    0.18
+                );
+
+            visual.fish.setYRot(
+                (float) visual.yaw
+            );
+
+            visual.fish.yBodyRot =
+                (float) visual.bodyYaw;
+
+            visual.fish.yHeadRot =
+                (float) visual.yaw;
+
+            visual.fish.setXRot(
+                -78.0F
+            );
+
+            visual.fish.setDeltaMovement(
+                movement
+            );
+
+            visual.fish.setPos(
+                target.x,
+                target.y,
+                target.z
+            );
+
+            visual.lastState = 3;
+            visual.lastPosition = target;
+            visual.lastHookPosition =
+                hook.position();
+
+            return;
+        }
+
         if (horizontalSpeed > 0.002) {
             Vec3 movementDirection =
                 horizontalVelocity.scale(
@@ -334,30 +403,9 @@ public final class ClientHookedFishVisuals {
 
         float verticalPitch =
             (float) Mth.clamp(
-                -hookVelocity.y * 72.0,
-                -16.0,
-                16.0
-            );
-
-        float motionPitch =
-            (float) (
-                Math.sin(
-                    hook.tickCount
-                        * (
-                            0.28
-                                + Math.min(
-                                    0.36,
-                                    horizontalSpeed
-                                        * 8.0
-                                )
-                        )
-                )
-                    * Math.min(
-                        5.0,
-                        1.5
-                            + horizontalSpeed
-                                * 32.0
-                    )
+                -hookVelocity.y * 52.0,
+                -10.0,
+                10.0
             );
 
         visual.fish.setYRot(
@@ -372,7 +420,6 @@ public final class ClientHookedFishVisuals {
 
         visual.fish.setXRot(
             verticalPitch
-                + motionPitch
         );
 
         visual.fish.setDeltaMovement(
