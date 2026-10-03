@@ -44,6 +44,14 @@ public abstract class FishingHookMixin
             );
 
     @Unique
+    private static final EntityDataAccessor<Boolean>
+        FISHING_REIMAGINED_CAUGHT_HANGING =
+            SynchedEntityData.defineId(
+                FishingHook.class,
+                EntityDataSerializers.BOOLEAN
+            );
+
+    @Unique
     private static final EntityDataAccessor<Float>
         FISHING_REIMAGINED_TENSION =
             SynchedEntityData.defineId(
@@ -178,6 +186,10 @@ public abstract class FishingHookMixin
             FISHING_REIMAGINED_FIGHT_ACTIVE,
             false
         );
+        builder.define(
+            FISHING_REIMAGINED_CAUGHT_HANGING,
+            false
+        );
         builder.define(FISHING_REIMAGINED_TENSION, 0.0F);
         builder.define(FISHING_REIMAGINED_PROGRESS, 0.0F);
         builder.define(FISHING_REIMAGINED_STAMINA, 1.0F);
@@ -207,6 +219,35 @@ public abstract class FishingHookMixin
             if (fishingReimagined$hookedFish != null) {
                 fishingReimagined$finish(hook, owner);
             }
+            return;
+        }
+
+        if (fishingReimagined$isCaughtHanging()) {
+            fishingReimagined$moveHangingAnchor(
+                owner,
+                hook
+            );
+
+            hook.getEntityData().set(
+                FISHING_REIMAGINED_TENSION,
+                0.72F
+            );
+            hook.getEntityData().set(
+                FISHING_REIMAGINED_PROGRESS,
+                1.0F
+            );
+            hook.getEntityData().set(
+                FISHING_REIMAGINED_FISH_VELOCITY,
+                0.0F
+            );
+            hook.getEntityData().set(
+                FISHING_REIMAGINED_LINE_VELOCITY,
+                0.0F
+            );
+            hook.getEntityData().set(
+                FISHING_REIMAGINED_FISH_STATE,
+                3
+            );
             return;
         }
 
@@ -385,6 +426,16 @@ public abstract class FishingHookMixin
     }
 
     @Override
+    public boolean fishingReimagined$isCaughtHanging() {
+        FishingHook hook =
+            (FishingHook) (Object) this;
+
+        return hook.getEntityData().get(
+            FISHING_REIMAGINED_CAUGHT_HANGING
+        );
+    }
+
+    @Override
     public boolean fishingReimagined$startFight(
         Player player,
         InteractionHand hand
@@ -410,6 +461,10 @@ public abstract class FishingHookMixin
         hook.getEntityData().set(
             FISHING_REIMAGINED_FIGHT_ACTIVE,
             true
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_CAUGHT_HANGING,
+            false
         );
         hook.getEntityData().set(
             FISHING_REIMAGINED_FISH_KIND,
@@ -692,11 +747,29 @@ public abstract class FishingHookMixin
             return;
         }
 
-        fishingReimagined$hookedFish.materialize(
-            level,
+        fishingReimagined$moveHangingAnchor(
             owner,
             hook
         );
+
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_CAUGHT_HANGING,
+            true
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_PROGRESS,
+            1.0F
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_FISH_STATE,
+            3
+        );
+
+        fishingReimagined$hookedFish.rewardCatch(
+            level,
+            owner
+        );
+
         hook.playSound(
             SoundEvents.FISHING_BOBBER_RETRIEVE,
             0.62F,
@@ -704,7 +777,116 @@ public abstract class FishingHookMixin
         );
 
         fishingReimagined$damageRod(owner);
-        fishingReimagined$finish(hook, owner);
+
+        owner.sendOverlayMessage(
+            Component.translatable(
+                "message.fishing_reimagined.catch_hanging"
+            )
+        );
+    }
+
+    @Override
+    public boolean fishingReimagined$takeCaughtFish(
+        Player player
+    ) {
+        FishingHook hook =
+            (FishingHook) (Object) this;
+
+        if (
+            hook.level().isClientSide()
+                || !fishingReimagined$isCaughtHanging()
+                || fishingReimagined$hookedFish == null
+                || hook.getPlayerOwner() != player
+                || !(hook.level()
+                    instanceof ServerLevel level)
+        ) {
+            return false;
+        }
+
+        fishingReimagined$hookedFish.materialize(
+            level,
+            hook
+        );
+
+        hook.playSound(
+            SoundEvents.FISHING_BOBBER_RETRIEVE,
+            0.48F,
+            1.16F
+        );
+
+        fishingReimagined$finish(
+            hook,
+            player
+        );
+
+        return true;
+    }
+
+    @Unique
+    private void fishingReimagined$moveHangingAnchor(
+        Player owner,
+        FishingHook hook
+    ) {
+        Vec3 look =
+            owner.getLookAngle();
+
+        Vec3 horizontal =
+            new Vec3(
+                look.x,
+                0.0,
+                look.z
+            );
+
+        if (
+            horizontal.lengthSqr()
+                < 1.0E-6
+        ) {
+            horizontal =
+                new Vec3(
+                    0.0,
+                    0.0,
+                    1.0
+                );
+        } else {
+            horizontal =
+                horizontal.normalize();
+        }
+
+        Vec3 right =
+            new Vec3(
+                -horizontal.z,
+                0.0,
+                horizontal.x
+            );
+
+        double handSide =
+            fishingReimagined$rodHand
+                    == InteractionHand.MAIN_HAND
+                ? 0.58
+                : -0.58;
+
+        Vec3 anchor =
+            owner.position()
+                .add(
+                    horizontal.scale(1.18)
+                )
+                .add(
+                    right.scale(handSide)
+                )
+                .add(
+                    0.0,
+                    1.18,
+                    0.0
+                );
+
+        hook.setPos(
+            anchor.x,
+            anchor.y,
+            anchor.z
+        );
+        hook.setDeltaMovement(
+            Vec3.ZERO
+        );
     }
 
     @Unique
@@ -769,6 +951,10 @@ public abstract class FishingHookMixin
         fishingReimagined$landingStart = null;
         hook.getEntityData().set(
             FISHING_REIMAGINED_FIGHT_ACTIVE,
+            false
+        );
+        hook.getEntityData().set(
+            FISHING_REIMAGINED_CAUGHT_HANGING,
             false
         );
         hook.getEntityData().set(
