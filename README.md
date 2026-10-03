@@ -7,7 +7,7 @@ Fishing Reimagined is a vanilla-oriented fishing rework for Minecraft Java Editi
 - Minecraft: **26.2**
 - Loaders: **Fabric + NeoForge**
 - Java: **25**
-- Mod version: **1.1.24+26.2**
+- Mod version: **1.1.25+26.2**
 - Development branch: **main**
 
 The current prototype uses a centered horizontal catch-bar fight, one authoritative HUD/world fish motion, a persistent rope renderer, and a post-catch hanging presentation that keeps the fish on the rod line until the player takes it down.
@@ -66,6 +66,7 @@ Artifacts are written to `fabric/build/libs/` and `neoforge/build/libs/`.
 - [Architecture](docs/ARCHITECTURE.md)
 - [Fight engine](docs/FIGHT_ENGINE.md)
 - [Horizontal catch-bar design](docs/RHYTHM_FISHING_DESIGN.md)
+- [Animation compatibility](docs/ANIMATION_COMPATIBILITY.md)
 - [Versioning](docs/VERSIONING.md)
 - [Validation status](docs/VALIDATION_STATUS.md)
 - [Playtest protocol](docs/PLAYTEST_PROTOCOL.md)
@@ -75,10 +76,15 @@ Artifacts are written to `fabric/build/libs/` and `neoforge/build/libs/`.
 MIT. See [LICENSE](LICENSE).
 
 
-## Animation resource-pack compatibility
+## Animation compatibility
 
-Fishing Reimagined deliberately leaves player and held-item pose animation to external animation systems and resource packs. The mod no longer injects its own first-person fishing-rod transform.
+Fishing Reimagined now has an automatic two-layer animation compatibility system.
 
-The hooked fish remains a vanilla cod, salmon, pufferfish or tropical-fish entity on the client, so entity-model packs can replace and animate those vanilla entity models. Fishing Reimagined controls only the authoritative world-space anchor, movement direction and a small whole-entity orientation needed to keep the fish attached to the line.
+- **No animation resource pack detected:** the mod uses its full built-in procedural fish and first-person rod animation.
+- **Animation resource pack detected:** the pack keeps control of model-part/player animation, while Fishing Reimagined adds only reduced physical motion from the fishing fight.
 
-This is intended to cooperate with EMF/ETF-based packs such as Fresh Animations and player-animation extensions instead of overriding their model-part animations.
+Fish and player animation resources are detected independently. This is designed for EMF/ETF/CEM packs such as Fresh Animations as well as player-animation packs without hard-depending on those mods.
+
+The config file supports `animationCompatibility: "auto"` by default, plus `"builtin"` and `"resource_pack"` overrides.
+
+See [Animation compatibility](docs/ANIMATION_COMPATIBILITY.md) for the exact ownership rules.
