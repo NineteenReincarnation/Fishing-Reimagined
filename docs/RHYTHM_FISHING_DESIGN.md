@@ -1,6 +1,6 @@
 # Horizontal catch-bar design
 
-Version 1.1.23+26.2 keeps the horizontal Stardew-like catch game and restructures the world presentation so the HUD fish and the water-world fish are one authoritative motion.
+Version 1.1.24+26.2 keeps the horizontal Stardew-like catch game and restructures the world presentation so the HUD fish and the water-world fish are one authoritative motion.
 
 ## One fish, one motion source
 
@@ -64,3 +64,31 @@ Catch Progress still provides the long-term approach toward the player, but fish
 ## Landing
 
 Landing now lasts 12 ticks and targets a point roughly two blocks from the player with a deterministic side offset. The live fish receives only a small residual motion away from the player, avoiding the previous camera-filling fly-through.
+
+
+## Post-catch hanging
+
+A successful catch no longer immediately becomes a free-moving fish beside the player.
+
+After Catch Progress reaches 100%:
+
+1. the hook/fish anchor is pulled directly toward the player's rod-hand side;
+2. the catch remains attached to the fishing line;
+3. the visual fish hangs below the line anchor instead of crossing the camera or landing on the player's head;
+4. XP and fishing statistics are awarded once the catch reaches the hanging state;
+5. using the fishing rod again takes the fish off the line and creates the normal live vanilla fish below the hook.
+
+While hanging, the horizontal minigame HUD and reel input are disabled, but the rope remains rendered.
+
+## Animation-pack ownership
+
+Player-animation and custom-entity-model packs should own model-part animation.
+
+Fishing Reimagined therefore no longer injects a custom first-person fishing-rod item transform. For hooked fish, the mod keeps using vanilla entity types and drives only:
+
+- world position;
+- world yaw/body yaw used to follow actual movement;
+- a small physical pitch from vertical motion;
+- a fixed hanging orientation after landing.
+
+It does not animate fish model bones, tails, fins or player limbs. Packs using EMF/ETF can therefore supply those animations themselves.
