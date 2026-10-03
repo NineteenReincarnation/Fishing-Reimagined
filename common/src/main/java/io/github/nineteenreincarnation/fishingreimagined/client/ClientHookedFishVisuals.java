@@ -239,11 +239,29 @@ public final class ClientHookedFishVisuals {
             access
                 .fishingReimagined$isCaughtHanging()
         ) {
+            float proceduralStrength =
+                ClientAnimationCompatibility
+                    .fishProceduralStrength();
+
+            visual.swimPhase +=
+                0.10
+                    + horizontalSpeed
+                        * 1.5;
+
+            double hangingBob =
+                Math.sin(
+                    visual.swimPhase
+                        * 0.72
+                )
+                    * 0.025
+                    * proceduralStrength;
+
             Vec3 target =
                 hook.position()
                     .add(
                         0.0,
-                        -0.52,
+                        -0.52
+                            + hangingBob,
                         0.0
                     );
 
@@ -272,6 +290,15 @@ public final class ClientHookedFishVisuals {
                     0.18
                 );
 
+            float hangingSway =
+                (float) (
+                    Math.sin(
+                        visual.swimPhase
+                    )
+                        * 5.0
+                        * proceduralStrength
+                );
+
             visual.fish.setYRot(
                 (float) visual.yaw
             );
@@ -284,6 +311,7 @@ public final class ClientHookedFishVisuals {
 
             visual.fish.setXRot(
                 -78.0F
+                    + hangingSway
             );
 
             visual.fish.setDeltaMovement(
@@ -383,6 +411,37 @@ public final class ClientHookedFishVisuals {
                 case TROPICAL_FISH -> 0.24;
             };
 
+        float proceduralStrength =
+            ClientAnimationCompatibility
+                .fishProceduralStrength();
+
+        float physicalPitchStrength =
+            ClientAnimationCompatibility
+                .fishPhysicalPitchStrength();
+
+        visual.swimPhase +=
+            0.16
+                + Math.min(
+                    0.42,
+                    horizontalSpeed
+                        * 3.8
+                );
+
+        double fallbackBob =
+            Math.sin(
+                visual.swimPhase
+                    * 0.64
+            )
+                * (
+                    0.016
+                        + Math.min(
+                            0.020,
+                            horizontalSpeed
+                                * 0.08
+                        )
+                )
+                * proceduralStrength;
+
         Vec3 target =
             hook.position()
                 .subtract(
@@ -392,7 +451,8 @@ public final class ClientHookedFishVisuals {
                 )
                 .add(
                     0.0,
-                    visual.depth,
+                    visual.depth
+                        + fallbackBob,
                     0.0
                 );
 
@@ -406,6 +466,23 @@ public final class ClientHookedFishVisuals {
                 -hookVelocity.y * 52.0,
                 -10.0,
                 10.0
+            )
+                * physicalPitchStrength;
+
+        float fallbackPitch =
+            (float) (
+                Math.sin(
+                    visual.swimPhase
+                )
+                    * (
+                        1.2
+                            + Math.min(
+                                4.0,
+                                horizontalSpeed
+                                    * 28.0
+                            )
+                    )
+                    * proceduralStrength
             );
 
         visual.fish.setYRot(
@@ -420,6 +497,7 @@ public final class ClientHookedFishVisuals {
 
         visual.fish.setXRot(
             verticalPitch
+                + fallbackPitch
         );
 
         visual.fish.setDeltaMovement(
@@ -649,6 +727,7 @@ public final class ClientHookedFishVisuals {
         private double bodyYaw;
         private double depth;
         private Vec3 forward;
+        private double swimPhase;
         private int lastState = -1;
 
         private VisualFish(
