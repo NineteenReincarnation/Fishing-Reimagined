@@ -77,7 +77,7 @@ public final class HookedFish {
         return new HookedFish(
             kind,
             fight,
-            hook.getY() - 0.48,
+            hook.getY(),
             bearing
         );
     }
@@ -185,7 +185,7 @@ public final class HookedFish {
 
         fish.snapTo(
             hook.getX(),
-            hook.getY(),
+            hook.getY() - 0.48,
             hook.getZ(),
             hook.getYRot(),
             0.0F
