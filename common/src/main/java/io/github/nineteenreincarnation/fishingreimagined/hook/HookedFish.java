@@ -77,7 +77,7 @@ public final class HookedFish {
         return new HookedFish(
             kind,
             fight,
-            hook.getY(),
+            hook.getY() - 0.48,
             bearing
         );
     }
@@ -153,9 +153,25 @@ public final class HookedFish {
         return kind;
     }
 
+    public void rewardCatch(
+        ServerLevel level,
+        Player owner
+    ) {
+        ExperienceOrb.award(
+            level,
+            owner.position()
+                .add(0.0, 0.5, 0.0),
+            1 + level.getRandom().nextInt(6)
+        );
+
+        owner.awardStat(
+            Stats.FISH_CAUGHT,
+            1
+        );
+    }
+
     public void materialize(
         ServerLevel level,
-        Player owner,
         FishingHook hook
     ) {
         AbstractFish fish =
@@ -175,45 +191,12 @@ public final class HookedFish {
             0.0F
         );
 
-        Vec3 awayFromOwner =
-            hook.position()
-                .subtract(owner.position());
-
-        Vec3 horizontal =
-            new Vec3(
-                awayFromOwner.x,
-                0.0,
-                awayFromOwner.z
-            );
-
-        if (horizontal.lengthSqr() > 1.0E-6) {
-            horizontal = horizontal.normalize();
-        } else {
-            horizontal = new Vec3(
-                0.0,
-                0.0,
-                1.0
-            );
-        }
-
         fish.setDeltaMovement(
-            horizontal.x * 0.035,
-            0.18,
-            horizontal.z * 0.035
+            0.0,
+            -0.04,
+            0.0
         );
 
         level.addFreshEntity(fish);
-
-        ExperienceOrb.award(
-            level,
-            owner.position()
-                .add(0.0, 0.5, 0.0),
-            1 + level.getRandom().nextInt(6)
-        );
-
-        owner.awardStat(
-            Stats.FISH_CAUGHT,
-            1
-        );
     }
 }
