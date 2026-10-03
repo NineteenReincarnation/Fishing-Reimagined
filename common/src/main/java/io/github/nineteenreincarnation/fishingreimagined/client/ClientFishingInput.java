@@ -22,6 +22,7 @@ public final class ClientFishingInput {
 
     public static void tick(Minecraft minecraft) {
         ClientSpecialFishingMode.tick(minecraft);
+        ClientAnimationCompatibility.tick(minecraft);
         ClientHookedFishVisuals.tick(minecraft);
 
         ReelAction action = ReelAction.HOLD;
@@ -35,6 +36,7 @@ public final class ClientFishingInput {
         }
 
         sendIfChanged(action);
+        ClientFishingPose.tick(minecraft);
         ClientFishingAudio.tick(minecraft);
     }
 
